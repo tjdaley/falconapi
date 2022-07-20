@@ -2,6 +2,7 @@
 document.py - Description of a document
 """
 from typing import Optional
+from uuid import uuid4
 from pydantic import BaseModel
 
 
@@ -9,7 +10,7 @@ class Document(BaseModel):
     """
     Document model
     """
-    id: Optional[str]
+    id: Optional[str] = str(uuid4())
     tracker_id: str
     path: str
     filename: str

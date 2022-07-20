@@ -2,6 +2,7 @@
 tracker.py - Tracker that contains a list of documents
 """
 from typing import Dict, Optional
+from uuid import uuid4
 from pydantic import BaseModel
 from models.document import Document
 
@@ -10,7 +11,7 @@ class Tracker(BaseModel):
     """
     Tracker model
     """
-    id: Optional[str]
+    id: Optional[str] = str(uuid4())
     name: str
     user_name: str
     documents: Optional[Dict[str, Document]] = {}
