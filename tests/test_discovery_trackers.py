@@ -16,12 +16,12 @@ def test_root():
 def test_add_tracker():
     response = requests.post(SERVER + PREFIX + '/trackers', json={'id': '123', 'user_name': 'test', 'name': 'Test Tracker'})
     assert response.status_code == 201
-    assert response.json() == {'message': 'Tracker created'}
+    assert response.json() == {'message': 'Tracker created', 'id': '123'}
 
 def test_add_duplicate_tracker():
     response = requests.post(SERVER + PREFIX + '/trackers', json={'id': '124', 'user_name': 'test', 'name': 'Test Tracker'})
     assert response.status_code == 201
-    assert response.json() == {'message': 'Tracker created'}
+    assert response.json() == {'message': 'Tracker created', 'id': '124'}
     response = requests.post(SERVER + PREFIX + '/trackers', json={'id': '124', 'user_name': 'test', 'name': 'Test Tracker'})
     assert response.status_code == 409
     assert response.json() == {'detail': 'Tracker already exists: 124'}
@@ -62,7 +62,7 @@ def test_get_trackers_for_user():
 def test_delete_tracker():
     response = requests.delete(SERVER + PREFIX + '/trackers/124')
     assert response.status_code == 200
-    assert response.json() == {'message': 'Tracker deleted'}
+    assert response.json() == {'message': 'Tracker deleted', 'id': '124'}
 
 def test_delete_tracker_not_found():
     response = requests.delete(SERVER + PREFIX + '/trackers/999')
@@ -80,7 +80,7 @@ def test_add_document():
 }
     response = requests.post(SERVER + PREFIX + '/trackers/123/documents', json=doc)
     assert response.status_code == 201
-    assert response.json() == {'message': 'Document added'}
+    assert response.json() == {'message': 'Document added', 'id': 'doc-1'}
 
 def test_add_duplicate_document():
     path = "x:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\2022-07-15 BOA 2304.pdf"
@@ -94,7 +94,7 @@ def test_add_duplicate_document():
     }
     response = requests.post(SERVER + PREFIX + '/trackers/123/documents', json=doc)
     assert response.status_code == 201
-    assert response.json() == {'message': 'Document added'}
+    assert response.json() == {'message': 'Document added', 'id': 'doc-2'}
     response = requests.post(SERVER + PREFIX + '/trackers/123/documents', json=doc)
     assert response.status_code == 409
     assert response.json() == {'detail': f'Document already exists: {path}'}
@@ -134,9 +134,27 @@ def test_get_documents():
 def test_delete_document():
     response = requests.delete(SERVER + PREFIX + '/trackers/123/documents/doc-1')
     assert response.status_code == 200
-    assert response.json() == {'message': 'Document deleted'}
+    assert response.json() == {'message': 'Document deleted', 'id': 'doc-1'}
 
 def test_delete_nonexistent_document():
     response = requests.delete(SERVER + PREFIX + '/trackers/123/documents/doc-999')
     assert response.status_code == 404
     assert response.json() == {'detail': 'Document not found: doc-999'}
+
+def test_add_tracker_no_id():
+    response = requests.post(SERVER + PREFIX + '/trackers', json={'user_name': 'test', 'name': 'Test Tracker'})
+    assert response.status_code == 201
+    assert response.json().get('message') == 'Tracker created'
+
+def test_add_document_no_id():
+    doc = {
+        "tracker_id":"123",
+        "path":"x:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\2022-07-15 BOA 2304.pdf",
+        "filename":"2022-07-15 BOA 2304.pdf",
+        "title": "BOA 2304",
+        "create_date":"07/01/2022"   
+    }
+    response = requests.post(SERVER + PREFIX + '/trackers/123/documents', json=doc)
+    assert response.status_code == 201
+    assert response.json().get('message') == 'Document added'
+
