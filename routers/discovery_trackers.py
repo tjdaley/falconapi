@@ -1,15 +1,22 @@
 """
 discovery_trackers.py - Falcon API Routers for Discovery Trackers
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Dict, List
 from models.document import Document
 from models.response import Response, ResponseAndId
 from models.tracker import Tracker
+from routers.api_version import APIVersion
+
+
+API_VERSION = APIVersion(1, 0).to_str()
+ROUTE_PREFIX = '/trackers'
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/token')
 
 router = APIRouter(
     tags=["Discovery Trackers"],
-    prefix="/trackers",
+    prefix=ROUTE_PREFIX,
     responses={404: {"description": "Not found"}}
 )
 

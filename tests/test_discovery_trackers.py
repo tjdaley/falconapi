@@ -3,15 +3,15 @@ test_root.py - Test the root endpoint
 """
 import requests
 
-
-SERVER = "http://localhost:8000"
-PREFIX = "/api/v1"
+API_VERSION = '1_0'
+SERVER = 'http://localhost:8000'
+PREFIX = f'/api/v{API_VERSION}'
 
 
 def test_root():
     response = requests.get(SERVER + '/')
     assert response.status_code == 200
-    assert response.json() == {'message': 'Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version 1.0.0'}
+    assert response.json() == {'message': f'Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version v{API_VERSION}'}
 
 def test_add_tracker():
     response = requests.post(SERVER + PREFIX + '/trackers', json={'id': '123', 'user_name': 'test', 'name': 'Test Tracker'})
