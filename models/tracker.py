@@ -13,7 +13,7 @@ class Tracker(BaseModel):
     """
     id: Optional[str] = str(uuid4())
     name: str
-    user_name: str
+    username: str
     documents: Optional[Dict[str, Document]] = {}
 
     class Config:

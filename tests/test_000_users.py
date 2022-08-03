@@ -29,21 +29,21 @@ def test_add_duplicate_user():
     assert response.status_code == 400
     assert response.json() == {'detail': 'User already exists'}
 
-TOKEN = None
-TOKEY_TYPE = None
+AUTH_HEADER = None
 def test_authenticate_user():
-    global TOKEN, TOKEY_TYPE
+    global AUTH_HEADER
     response = requests.post(SERVER + PREFIX + '/users/token', data={'username': test_user['username'], 'password': test_user['password']})
     assert response.status_code == 200
     my_response = response.json()
     assert 'access_token' in my_response
     assert my_response['access_token'] != ''
     assert my_response['token_type'] == 'bearer'
-    TOKEN = my_response['access_token']
-    TOKEY_TYPE = my_response['token_type']
+    token = my_response['access_token']
+    token_type = my_response['token_type']
+    AUTH_HEADER = {'Authorization': f'{token_type} {token}'}
 
 def test_get_current_user():
-    response = requests.get(SERVER + PREFIX + '/users/me', headers={'Authorization': f'{TOKEY_TYPE} {TOKEN}'})
+    response = requests.get(SERVER + PREFIX + '/users/me', headers=AUTH_HEADER)
     assert response.status_code == 200
     my_response = response.json()
     assert my_response['username'] == test_user['username']
