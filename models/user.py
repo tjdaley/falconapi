@@ -21,8 +21,7 @@ class User(BaseModel):
                 "full_name": "Thomas J. Daley, Esq.",
                 "disabled": False,
                 "admin": False,
-                "token": "",
-                "hashed_password": "$2b$12$CPC0UdsEoanAkwnJGb1iUO4OzRwuQ9pw66wqxADuzpUY1zBAO.FzK"
+                "token": ""
             }
         }
 

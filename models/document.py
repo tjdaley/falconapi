@@ -11,9 +11,9 @@ class Document(BaseModel):
     Document model
     """
     id: Optional[str] = str(uuid4())
-    tracker_id: str
     path: str
     filename: str
+    type: str
     title: str
     create_date: str
     document_date: Optional[str]
@@ -21,15 +21,16 @@ class Document(BaseModel):
     ending_bates: Optional[str]
     page_count: Optional[int]
     bates_pattern: Optional[str]
+    added_username: Optional[str]
 
     class Config:
         orm_mode = True
         schema_extra = {
             "example": {
                 "id": "doc-1",
-                "tracker_id": "tracker-1",
                 "path": "C:\\Users\\my\\Documents\\Client 20304 - Our Production\\20304-OurProduction.pdf",
                 "filename": "20304-OurProduction.pdf",
+                "type": "application/pdf",
                 "title": "20304-OurProduction",
                 "create_date": "2020-04-01",
                 "document_date": "2020-04-01",

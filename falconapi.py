@@ -1,5 +1,9 @@
 """
 falconapi.py - Falcon API
+
+TODO: Set up opentelemetry
+TODO: Set up an OpenTelemtry exporter for this API
+https://grafana.com/blog/2022/05/10/how-to-collect-prometheus-metrics-with-the-opentelemetry-collector-and-grafana/
 """
 from sys import prefix
 from fastapi import FastAPI, status

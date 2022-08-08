@@ -26,6 +26,8 @@ class UsersTable(Database):
         """
         existing_user = self.get_user_by_username(user.username)
         if existing_user:
+            if self.fail_silent:
+                return self.insert_one_result(user.username)
             raise Exception(f"User {user.username} already exists")
         return self.collection.insert_one(user.dict())
 
