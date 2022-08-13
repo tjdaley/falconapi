@@ -59,6 +59,12 @@ class DocumentsDict(dict):
     
     def get(self, key, default=None):
         return self.documents.get_document(key) or default
+    
+    def get_by_path(self, path: str) -> Document:
+        """
+        Get document by path
+        """
+        return self.documents.get_document_by_path(path)
 
     def get_for_tracker(self, tracker: Tracker) -> List[Document]:
         """

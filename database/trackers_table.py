@@ -150,13 +150,27 @@ class TrackersTable(Database):
         """
         Update a tracker in the database
         """
+
+        # Update the tracker in the database
+        if 'documents' in tracker.dict():
+            return self.collection.update_one(
+                {'id': tracker.id},
+                {'$set': {
+                    'name': tracker.name,
+                    'username': tracker.username,
+                    'client_reference': tracker.client_reference,
+                    'documents': tracker.documents
+                    }
+                }
+            )
+
+        # If a client app invokes the update path, the Tracker object will not have the documents field.
         return self.collection.update_one(
             {'id': tracker.id},
             {'$set': {
                 'name': tracker.name,
                 'username': tracker.username,
                 'client_reference': tracker.client_reference,
-                'documents': tracker.documents
                 }
             }
         )
@@ -192,25 +206,25 @@ class TrackersTable(Database):
         """
         Link a document to a tracker
         """
-        tracker = self.get_tracker_by_id(tracker.id)
-        if document.id in tracker.documents:
+        existing_tracker = self.get_tracker_by_id(tracker.id)
+        if document.id in existing_tracker.documents:
             if self.fail_silent:
                 return self.update_one_result()
             raise Exception(f"Document {document.id} is already in tracker {tracker.id}")
-        tracker.documents.append(document.id)
-        return self.update_tracker(tracker)
+        existing_tracker.documents.append(document.id)
+        return self.update_tracker(existing_tracker)
 
     def unlink_doc(self, tracker: Tracker, document_id: str) -> bool:
         """
         Unlink a document from a tracker
         """
-        tracker = self.get_tracker_by_id(tracker.id)
-        if document_id not in tracker.documents:
+        existing_tracker = self.get_tracker_by_id(tracker.id)
+        if document_id not in existing_tracker.documents:
             if self.fail_silent:
                 return self.update_one_result()
             raise Exception(f"Document {document_id} is not in tracker {tracker.id}")
-        tracker.documents.remove(document_id)
-        return self.update_tracker(tracker)
+        existing_tracker.documents.remove(document_id)
+        return self.update_tracker(existing_tracker)
     
     def get_count(self) -> int:
         """
