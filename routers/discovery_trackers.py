@@ -111,4 +111,3 @@ async def get_documents(tracker_id: str, user: User = Depends(get_current_active
     if tracker.username != user.username:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     return documents.get_for_tracker(tracker)
-

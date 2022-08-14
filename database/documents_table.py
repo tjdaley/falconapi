@@ -166,7 +166,7 @@ class DocumentsTable(Database):
         for doc_id in tracker.documents:
             docs.append(self.get_document(doc_id))
         return docs
-
+    
     def get_count(self) -> int:
         """
         Get the number of documents in the database

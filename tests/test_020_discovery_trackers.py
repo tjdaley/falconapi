@@ -31,7 +31,7 @@ DOC_1 = {
     "beginning_bates": "TD002304",
     "ending_bates": "TD002304",
     "page_count": 1,
-    "bates_pattern": "TD\d{6}",
+    "bates_pattern": "TD\\d{6}",
     "added_username": LOGIN_DATA['username']
 }
 DOC_2 = {
@@ -45,7 +45,7 @@ DOC_2 = {
     "beginning_bates": "TD002305",
     "ending_bates": "TD002309",
     "page_count": 5,
-    "bates_pattern": "TD\d{6}",
+    "bates_pattern": "TD\\d{6}",
     "added_username": LOGIN_DATA['username']
 }
 
@@ -152,12 +152,31 @@ def test_link_duplicate_document():
     assert response.status_code == 409
     assert response.json() == {'detail': f'Document already linked: {doc_id}'}
 
+def test_create_tracker_125():
+    tracker_125 = {'id': '125', 'name': 'Tracker 125', 'username': 'test_user'}
+    response = requests.post(SERVER + PREFIX + '/trackers', json=tracker_125, headers=AUTH_HEADER)
+    assert response.status_code == 201
+    assert response.json() == {'message': 'Tracker created', 'id': '125'}
+
+def test_link_docs_to_tracker_125():
+    response = requests.patch(SERVER + PREFIX + '/trackers/125/documents/link/doc-1', headers=AUTH_HEADER)
+    assert response.status_code == 202
+    assert response.json() == {'message': 'Document linked to tracker', 'id': 'doc-1'}
+    response = requests.patch(SERVER + PREFIX + '/trackers/125/documents/link/doc-2', headers=AUTH_HEADER)
+    assert response.status_code == 202
+    assert response.json() == {'message': 'Document linked to tracker', 'id': 'doc-2'}
+
+def test_delete_doc_no_cascade():
+    response = requests.delete(SERVER + PREFIX + '/documents?doc_id=doc-1&cascade=false', headers=AUTH_HEADER)
+    assert response.status_code == 409
+    response = requests.delete(SERVER + PREFIX + '/documents?doc_id=doc-1', headers=AUTH_HEADER)
+    assert response.status_code == 200
+
 def test_get_documents_auth():
     response = requests.get(SERVER + PREFIX + '/trackers/123/documents', headers=AUTH_HEADER)
     assert response.status_code == 200
     docs = response.json()
-    assert docs[0].get('id') == DOC_1.get('id') or docs[1].get('id') == DOC_1.get('id')
-    assert docs[0].get('id') == DOC_2.get('id') or docs[1].get('id') == DOC_2.get('id')
+    assert docs[0].get('id') == DOC_2.get('id')
 
 def test_get_documents_no_auth():
     response = requests.get(SERVER + PREFIX + '/trackers/123/documents')

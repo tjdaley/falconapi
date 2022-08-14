@@ -41,11 +41,9 @@ class TrackersDict(dict):
         self.collection = self.trackers.collection
 
     def __getitem__(self, key):
-        print(f"Getting tracker {key} of type {type(key)}")
         return self.trackers.get_tracker(key)
 
     def __setitem__(self, key, value):
-        print(f"Setting {key} to {value}")
         tracker = self.trackers.get_tracker(key)
         if tracker:
             self.trackers.update_tracker(value)
@@ -107,8 +105,7 @@ class TrackersDict(dict):
         Get all trackers for a username
         """
         return self.trackers.get_trackers_by_username(username)
-
-
+    
 class TrackersTable(Database):
     """
     Class for interacting with the trackers table
@@ -201,6 +198,23 @@ class TrackersTable(Database):
         """
         tracker = self.get_tracker_by_id(tracker_id)
         return document_id in tracker.documents if tracker else False
+    
+    def get_trackers_linked_to_doc(self, doc_id: str) -> list:
+        """
+        Get all trackers linked to a document
+        """
+        return list(self.collection.find({'documents': doc_id}))
+    
+    def delete_document_from_trackers(self, doc_id: str) -> None:
+        """
+        Delete a document from all trackers
+        """
+        trackers = self.get_trackers_linked_to_doc(doc_id)
+
+        for tracker in trackers:
+            self.unlink_doc(Tracker(**tracker), doc_id)
+        
+        return {'trackers': len(trackers)}
 
     def link_doc(self, tracker: Tracker, document: Document) -> bool:
         """
