@@ -48,7 +48,7 @@ async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_u
 
 # Get all trackers for a user
 @router.get('/user', status_code=status.HTTP_200_OK, response_model=List[Tracker], summary='Get all trackers for a user')
-async def get_trackers_for_user(username: str | None = None, user: User = Depends(get_current_active_user)):
+async def get_trackers_for_user(username: str = None, user: User = Depends(get_current_active_user)):
     if username is None:
         username = user.username
     if user.admin or user.username == username:
