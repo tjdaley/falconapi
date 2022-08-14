@@ -8,10 +8,10 @@ class User(BaseModel):
     username: str
     email: str
     full_name: str
-    disabled: bool | None = False
-    admin: bool | None = False
+    disabled: Optional[bool] = False
+    admin: Optional[bool] = False
     token: Optional[str] = None
-    hashed_password: str | None = None
+    hashed_password: Optional[str] = None
 
     class Config:
         orm_mode = True
