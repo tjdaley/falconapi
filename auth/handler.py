@@ -52,7 +52,7 @@ Args:
 Returns:
     str: The JWT-encoded access token.
 """
-def create_access_token(username: str, expires_delta: timedelta | None = None) -> Dict[str, str]:
+def create_access_token(username: str, expires_delta: timedelta = None) -> Dict[str, str]:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
