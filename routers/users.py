@@ -1,6 +1,7 @@
 """
 users.py - Users Routes
 """
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -25,7 +26,7 @@ router = APIRouter(
 
 # Class for responding to user registration
 class InsertException(BaseModel):
-    detail: str | None = "User already exists"
+    detail: Optional[str] = "User already exists"
 
 """
 Verify that the password we received, when hashed, matches the hashed password in the database.

@@ -2,6 +2,7 @@
 decorators.py - Decorators
 """
 from fastapi import Request, HTTPException, status
+from typing import Optional
 from functools import wraps
 from pydantic import BaseModel
 import os
@@ -18,7 +19,7 @@ API_VERSION = APIVersion(1, 0).to_str()
 USERS_TABLE = UsersTable()
 
 class TokenData(BaseModel):
-    username: str | None = None
+    username: Optional[str] = None
 
 def check_api_token(func):
     @wraps(func)
