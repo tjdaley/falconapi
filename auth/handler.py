@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import time
-from typing import Dict
+from typing import Dict, Optional
 import os
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
@@ -34,7 +34,7 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: str | None = None
+    username: Optional[str] = None
 
 
 def token_response(token: str) -> Token:
