@@ -14,6 +14,7 @@ class Tracker(BaseModel):
     name: str
     username: Optional[str]
     client_reference: Optional[str]
+    bates_pattern: Optional[str]
     documents: Optional[List[str]] = []  # List of document paths for this tracker.
 
     class Config:
@@ -24,6 +25,7 @@ class Tracker(BaseModel):
                 "name": "Client 20304 - Our Production",
                 "username": "my@email.com",
                 "client_reference": "DALTHO01A",
+                "bates_pattern": "TJD \\d{6}",
                 "documents": []
             }
         }
@@ -38,6 +40,7 @@ class TrackerUpdate(BaseModel):
     name: Optional[str]
     username: Optional[str]
     client_reference: Optional[str]
+    bates_pattern: Optional[str]
 
     class Config:
         orm_mode = True
@@ -45,5 +48,6 @@ class TrackerUpdate(BaseModel):
             "example": {
                 "id": "tracker-1",
                 "name": "New Tracker Name",
+                "bates_pattern": "TJD \\d{6}",
             }
         }
