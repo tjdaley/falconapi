@@ -1,15 +1,16 @@
 """
 user.py - User model
 """
+from typing import Optional
 from pydantic import BaseModel
 
 class User(BaseModel):
     username: str
-    email: str | None = None
-    full_name: str | None = None
+    email: str
+    full_name: str
     disabled: bool | None = False
     admin: bool | None = False
-    token: str | None = None
+    token: Optional[str] = None
     hashed_password: str | None = None
 
     class Config:
@@ -21,7 +22,6 @@ class User(BaseModel):
                 "full_name": "Thomas J. Daley, Esq.",
                 "disabled": False,
                 "admin": False,
-                "token": ""
             }
         }
 
