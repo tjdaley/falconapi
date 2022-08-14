@@ -20,7 +20,7 @@ class Document(BaseModel):
     beginning_bates: Optional[str]
     ending_bates: Optional[str]
     page_count: Optional[int]
-    bates_pattern: Optional[str]
+    client_reference: Optional[str]
     added_username: Optional[str]
 
     class Config:
@@ -37,6 +37,6 @@ class Document(BaseModel):
                 "beginning_bates": "TJD000001",
                 "ending_bates": "TJD000009",
                 "page_count": "9",
-                "bates_pattern": "TJD\d{6}"
+                "client_reference": "DALTHO01A",
             }
         }
