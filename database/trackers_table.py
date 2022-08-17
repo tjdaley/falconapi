@@ -7,7 +7,6 @@ from models.tracker import Tracker
 from models.document import Document
 from database.documents_table import DocumentsDict
 
-DATABASE = 'falcon'
 COLLECTION = 'trackers'
 
 class TrackersDict(dict):
@@ -63,10 +62,10 @@ class TrackersDict(dict):
         return self.trackers.get_count()
 
     def __repr__(self):
-        return f"{DATABASE}.{COLLECTION}"
+        return f"{Database.database}.{COLLECTION}"
 
     def __str__(self):
-        return f"{DATABASE}.{COLLECTION}"
+        return f"{Database.database}.{COLLECTION}"
 
     def keys(self):
         trackers = self.trackers.get_all_trackers()
@@ -115,7 +114,7 @@ class TrackersTable(Database):
         Initialize the trackers table.
         """
         super().__init__()
-        self.collection = self.conn[DATABASE][COLLECTION]
+        self.collection = self.conn[self.database][COLLECTION]
 
     def get_tracker(self, id: str) -> Tracker:
         """
@@ -154,9 +153,13 @@ class TrackersTable(Database):
                 {'id': tracker.id},
                 {'$set': {
                     'name': tracker.name,
-                    'username': tracker.username,
                     'client_reference': tracker.client_reference,
-                    'documents': tracker.documents
+                    'documents': tracker.documents,
+                    'added_username': tracker.added_username,
+                    'added_date': tracker.added_date,
+                    'updated_username': tracker.updated_username,
+                    'updated_date': tracker.updated_date,
+                    'auth_usernames': tracker.auth_usernames,
                     }
                 }
             )
@@ -166,8 +169,12 @@ class TrackersTable(Database):
             {'id': tracker.id},
             {'$set': {
                 'name': tracker.name,
-                'username': tracker.username,
                 'client_reference': tracker.client_reference,
+                'added_username': tracker.added_username,
+                'added_date': tracker.added_date,
+                'updated_username': tracker.updated_username,
+                'updated_date': tracker.updated_date,
+                'auth_usernames': tracker.auth_usernames,
                 }
             }
         )
@@ -188,7 +195,7 @@ class TrackersTable(Database):
         """
         Get all trackers for a username
         """
-        tracker_docs = self.collection.find({'username': username})
+        tracker_docs = self.collection.find({'auth_usernames': username})
         return [Tracker(**tracker_doc) for tracker_doc in tracker_docs]
 
     # See if a document is in a tracker

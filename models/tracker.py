@@ -1,9 +1,10 @@
 """
 tracker.py - Tracker that contains a list of documents
 """
+from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Tracker(BaseModel):
@@ -12,10 +13,14 @@ class Tracker(BaseModel):
     """
     id: Optional[str] = str(uuid4())
     name: str
-    username: Optional[str]
     client_reference: Optional[str]
     bates_pattern: Optional[str]
     documents: Optional[List[str]] = []  # List of document paths for this tracker.
+    added_username: Optional[str]
+    added_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_username: Optional[str]
+    updated_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    auth_usernames: Optional[List[str]] = [] # List of usernames that can access this tracker.
 
     class Config:
         orm_mode = True
@@ -41,6 +46,11 @@ class TrackerUpdate(BaseModel):
     username: Optional[str]
     client_reference: Optional[str]
     bates_pattern: Optional[str]
+    added_username: Optional[str]
+    added_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_username: Optional[str]
+    updated_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    auth_usernames: Optional[List[str]] = [] # List of usernames that can access this tracker.
 
     class Config:
         orm_mode = True
@@ -48,6 +58,5 @@ class TrackerUpdate(BaseModel):
             "example": {
                 "id": "tracker-1",
                 "name": "New Tracker Name",
-                "bates_pattern": "TJD \\d{6}",
             }
         }

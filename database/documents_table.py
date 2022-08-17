@@ -6,7 +6,6 @@ from database.db import Database
 from models.document import Document
 from models.tracker import Tracker
 
-DATABASE = 'falcon'
 COLLECTION = 'documents'
 
 class DocumentsDict(dict):
@@ -41,10 +40,10 @@ class DocumentsDict(dict):
         return self.documents.get_count()
 
     def __repr__(self):
-        return f"{DATABASE}.{COLLECTION}"
+        return f"{Database.database}.{COLLECTION}"
 
     def __str__(self):
-        return f"{DATABASE}.{COLLECTION}"
+        return f"{Database.database}.{COLLECTION}"
 
     def keys(self):
         docs = self.documents.get_all_documents()
@@ -81,7 +80,7 @@ class DocumentsTable(Database):
         Initialize the documents table.
         """
         super().__init__()
-        self.collection = self.conn[DATABASE][COLLECTION]
+        self.collection = self.conn[self.database][COLLECTION]
 
     def get_document(self, id: str) -> Document:
         """
@@ -110,6 +109,36 @@ class DocumentsTable(Database):
         Args:
             document (Document): The document to update
         """
+        fields = list(document.__fields_set__)
+        fields.remove('id')
+        print("*" * 80)
+        print(document.__fields_set__)
+        print("*" * 80)
+        print(fields)
+        values = document.dict()
+        set_clause = {}
+        for field in fields:
+            set_clause[field] = values[field]
+        return self.collection.update_one({'id': document.id}, {'$set': set_clause})
+        """
+        if document.added_username:
+            return self.collection.update_one(
+                {'id': document.id},
+                {'$set': {
+                    'path': document.path,
+                    'filename': document.filename,
+                    'type': document.type,
+                    'title': document.title,
+                    'create_date': document.create_date,
+                    'document_date': document.document_date,
+                    'beginning_bates': document.beginning_bates,
+                    'ending_bates': document.ending_bates,
+                    'page_count': document.page_count,
+                    'added_username': document.added_username
+                    }
+                }
+            )
+
         return self.collection.update_one(
             {'id': document.id},
             {'$set': {
@@ -122,12 +151,10 @@ class DocumentsTable(Database):
                 'beginning_bates': document.beginning_bates,
                 'ending_bates': document.ending_bates,
                 'page_count': document.page_count,
-                'bates_pattern': document.bates_pattern,
-                'added_username': document.added_username
                 }
             }
         )
-
+        """
     def delete_document(self, id: str) -> dict:
         """
         Delete a document from the database

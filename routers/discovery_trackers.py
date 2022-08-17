@@ -1,17 +1,23 @@
 """
 discovery_trackers.py - Falcon API Routers for Discovery Trackers
 """
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
 from typing import List
+import os
 from auth.handler import get_current_active_user
+from models.audit import Audit
 from models.document import Document
 from models.response import Response, ResponseAndId
 from models.tracker import Tracker, TrackerUpdate
 from models.user import User
+from database.audit_table import AuditTable
 from database.trackers_table import TrackersDict
 from database.documents_table import DocumentsDict
 from routers.api_version import APIVersion
+import settings  # NOQA
 
 
 API_VERSION = APIVersion(1, 0).to_str()
@@ -24,16 +30,51 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
+audittable = AuditTable()
 trackers = TrackersDict()
 documents = DocumentsDict()
+
+AUDIT_LOGGING_ENABLED = os.getenv('AUDIT_LOGGING_ENABLED', 'False').lower() == 'true'
+print(f"AUDIT_LOGGING_ENABLED: {AUDIT_LOGGING_ENABLED}")
+
+# Log an audit event
+def log_audit_event(event: str, doc_id: str, user: User, old_data: BaseModel = None, new_data: BaseModel = None, success: bool = True, message: str = None) -> None:
+    if AUDIT_LOGGING_ENABLED:
+        if old_data and isinstance(old_data, BaseModel):
+            str_old_data = old_data.json(exclude_none=True, exclude_unset=True)
+        else:
+            str_old_data = old_data
+        if new_data and isinstance(new_data, BaseModel):
+            str_new_data = new_data.json(exclude_none=True, exclude_unset=True)
+        else:
+            str_new_data = new_data
+        audit = Audit(
+            description=event,
+            table=str(trackers),
+            record_id=doc_id,
+            username=user.username,
+            admin_user=user.admin,
+            event_date=datetime.now(),
+            success = success,
+            message = message,
+            old_data=str_old_data if old_data else None,
+            new_data=str_new_data if new_data else None
+        )
+        audittable.create_event(audit)
+    else:
+        print(f"AUDIT_LOGGING_ENABLED is False, so not logging audit event: {event}")
 
 # Add a tracker
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary='Create a tracker')
 async def create_tracker(tracker: Tracker, user: User = Depends(get_current_active_user)):
     if tracker.id in trackers:
+        log_audit_event('create_tracker', tracker.id, user, success=False, message=f"Tracker {tracker.id} already exists")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tracker already exists: {tracker.id}")
-    tracker.username = user.username
+    tracker.added_username = user.username
+    tracker.added_date = datetime.now()
+    tracker.auth_usernames = [user.username]
     trackers[tracker.id] = tracker
+    log_audit_event('create_tracker', tracker.id, user, new_data=tracker)
     return {'message': "Tracker created", 'id': tracker.id}
 
 # Get a tracker by Tracker ID
@@ -41,9 +82,12 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
 async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
     if not tracker:
+        log_audit_event('get_tracker', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
-    if tracker.username != user.username:
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('get_tracker', tracker_id, user, success=False, message=f"User {user.username} not authorized to get tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    log_audit_event('get_tracker', tracker_id, user)
     return tracker
 
 # Get all trackers for a user
@@ -52,6 +96,7 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
     if username is None:
         username = user.username
     if user.admin or user.username == username:
+        log_audit_event(f'get_trackers_for_user::{username}', '', user)
         return trackers.get_for_username(username)
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
@@ -61,45 +106,94 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
 async def update_tracker(tracker: TrackerUpdate, user: User = Depends(get_current_active_user)):
     existing_tracker = trackers.get(tracker.id)
     if not existing_tracker:
+        log_audit_event('update_tracker', tracker.id, user, success=False, message=f"Tracker {tracker.id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {existing_tracker.id}")
-    if existing_tracker.username != user.username and not user.admin:
+    if user.username not in existing_tracker.auth_usernames and not user.admin:
+        log_audit_event('update_tracker', tracker.id, user, success=False, message=f"User {user.username} not authorized to update tracker {tracker.id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    tracker.updated_username = user.username
+    tracker.updated_date = datetime.now()
     trackers[tracker.id] = tracker
+    log_audit_event('update_tracker', tracker.id, user, old_data=existing_tracker, new_data=tracker)
     return {'message': "Tracker updated", 'id': tracker.id}
+
+# Add user to the list of authorized users for a tracker
+@router.put('/auth', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Add user to the list of authorized users for a tracker')
+async def add_user_to_tracker_auth(tracker_id: str, username: str, user: User = Depends(get_current_active_user)):
+    existing_tracker = trackers.get(tracker_id)
+    if not existing_tracker:
+        log_audit_event('add_user_to_tracker_auth', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {existing_tracker.id}")
+    if user.username not in existing_tracker.auth_usernames and not user.admin:
+        log_audit_event('add_user_to_tracker_auth', tracker_id, user, success=False, message=f"User {user.username} not authorized to add user {username} to tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    if username in existing_tracker.auth_usernames:
+        log_audit_event('add_user_to_tracker_auth', tracker_id, user, success=False, message=f"User {username} already authorized for tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"User already authorized: {username}")
+    old_data = existing_tracker.json(exclude_none=True, exclude_unset=True)
+    existing_tracker.auth_usernames.append(username)
+    trackers[tracker_id] = existing_tracker
+    log_audit_event('add_user_to_tracker_auth', tracker_id, user, new_data=existing_tracker, old_data=old_data)
+    return {'message': "User added to list of authorized users", 'id': tracker_id}
 
 # Delete a tracker
 @router.delete('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a tracker')
 async def delete_tracker(tracker_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
-    if not tracker or (tracker.username != user.username and not user.is_admin):
+    if not tracker:
+        log_audit_event('delete_tracker', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
-    del trackers[tracker_id]
-    return {'message': "Tracker deleted", 'id': tracker_id}
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('delete_tracker', tracker_id, user, success=False, message=f"User {user.username} not authorized to delete tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    # If this is the user who created the tracker or an admin user, then delete the tracker.
+    if user.username == tracker.added_username or user.admin:
+        del trackers[tracker_id]
+        log_audit_event('delete_tracker', tracker_id, user, old_data=tracker)
+        return {'message': "Tracker deleted", 'id': tracker_id}
+    
+    # Otherwise, just remove the user from the auth_usernames list.
+    old_data = tracker.copy()
+    tracker.auth_usernames.remove(user.username)
+    trackers[tracker.id] = tracker
+    log_audit_event(f'delete_tracker::for user {user.username}', tracker_id, user, new_data=tracker, old_data=old_data)
+    return {'message': "Tracker updated", 'id': tracker_id}
 
 # Link a document.id to the tracker document list
 @router.patch('/{tracker_id}/documents/link/{document_id}', status_code=status.HTTP_202_ACCEPTED, response_model=ResponseAndId, summary='Link a document to a tracker')
 async def link_document(tracker_id: str, document_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
     if not tracker:
+        log_audit_event('link_document', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
-    if tracker.username != user.username:
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('link_document', tracker_id, user, success=False, message=f"User {user.username} not authorized to link document {document_id} to tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     document = documents.get(document_id)
     if not document:
+        log_audit_event('link_document', tracker_id, user, success=False, message=f"Document {document_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {document_id}")
     if document.id in tracker.documents:
+        log_audit_event('link_document', tracker_id, user, success=False, message=f"Document {document_id} already linked to tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document already linked: {document_id}")
 
     r = trackers.link_doc(tracker, document)
+    log_audit_event('link_document', tracker_id, user, new_data="{'document_id': document_id}")
     return {'message': "Document linked to tracker", 'id': document_id}
 
 # Unlink a document from a tracker
 @router.patch('/{tracker_id}/documents/unlink/{document_id}', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a document from a tracker')
 async def unlink_document(tracker_id: str, document_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
-    if tracker is None or tracker.username != user.username:
+    if tracker is None:
+        log_audit_event('unlink_document', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('unlink_document', tracker_id, user, success=False, message=f"User {user.username} not authorized to unlink document {document_id} from tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     trackers.unlink_doc(tracker, document_id)
+    log_audit_event('unlink_document', tracker_id, user, old_data="{'document_id': document_id}")
     return {'message': "Document unlinked from tracker", 'id': document_id}
 
 # Get all documents from a tracker
@@ -107,7 +201,10 @@ async def unlink_document(tracker_id: str, document_id: str, user: User = Depend
 async def get_documents(tracker_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
     if tracker is None:
+        log_audit_event('get_documents', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
-    if tracker.username != user.username:
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('get_documents', tracker_id, user, success=False, message=f"User {user.username} not authorized to get documents from tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    log_audit_event('get_documents', tracker_id, user)
     return documents.get_for_tracker(tracker)

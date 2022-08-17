@@ -11,6 +11,7 @@ class Database():
     Class for connecting to our database
     """
     conn = None
+    database = os.getenv('DATABASE_NAME', 'falcon')
 
     def __init__(self, fail_silent: bool = True) -> None:
         db_url = os.getenv('DB_URL', 'mongodb://localhost:27017')

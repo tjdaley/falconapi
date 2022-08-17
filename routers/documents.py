@@ -1,6 +1,7 @@
 """
 documents.py - Falcon API Routers for Documents
 """
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
@@ -33,6 +34,7 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
     if documents.get_by_path(doc.path):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document already exists: {doc.path}")
     doc.added_username = user.username
+    doc.added_date = datetime.now()
     documents[doc.id] = doc
     return {'message': "Document added", 'id': doc.id}
 
@@ -51,7 +53,8 @@ async def get_document(doc_id: str, user: User = Depends(get_current_active_user
 async def update_document(doc: Document, user: User = Depends(get_current_active_user)):
     if not doc.id in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc.id}")
-    doc.added_username = user.username
+    doc.updated_username = user.username
+    doc.updated_date = datetime.now()
     documents[doc.id] = doc
     return {'message': "Document updated", 'id': doc.id}
 
@@ -64,7 +67,7 @@ async def delete_document(doc_id: str, cascade: bool = 'true', user: User = Depe
     if not doc_id in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
     doc = documents.get(doc_id)
-    if doc.added_username != user.username:
+    if doc.added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     trackers_linked_to_doc = trackers.get_trackers_linked_to_doc(doc_id)
 

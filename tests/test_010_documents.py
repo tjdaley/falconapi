@@ -17,9 +17,6 @@ test_user = {
 }
 
 LOGIN_DATA  = {'username': test_user['username'], 'password': test_user['password']}
-TRACKER_ID_123 = {'id': '123', 'username': test_user['username'], 'name': 'Test Tracker', 'documents': [], 'client_reference':'20202.1'}
-TRACKER_ID_124 = {'id': '124', 'username': test_user['username'], 'name': 'Test Tracker', 'documents': [], 'client_reference':'20202.1'}
-TRACKER_NO_ID = {'username': test_user['username'], 'name': 'Test Tracker', 'documents': []}
 DOC_1 = {
     "id": "doc-1",
     "path":"x:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\2022-07-15 BOA 2304.pdf",
@@ -30,9 +27,8 @@ DOC_1 = {
     "document_date": "07/15/2022",
     "beginning_bates": "TD002304",
     "ending_bates": "TD002304",
+    "client_reference": "20202.1",
     "page_count": 1,
-    "bates_pattern": "TD\d{6}",
-    "added_username": LOGIN_DATA['username']
 }
 DOC_2 = {
     "id": "doc-2",
@@ -44,9 +40,8 @@ DOC_2 = {
     "document_date": "08/15/2022",
     "beginning_bates": "TD002305",
     "ending_bates": "TD002309",
+    "client_reference": "20202.1",
     "page_count": 5,
-    "bates_pattern": "TD\d{6}",
-    "added_username": LOGIN_DATA['username']
 }
 
 AUTH_HEADER = None
@@ -102,7 +97,7 @@ def test_add_duplicate_document_id_auth():
     response = requests.post(SERVER + PREFIX + '/documents', headers=AUTH_HEADER, json=DOC_1)
     assert response.status_code == 409
     assert response.json() == {'detail': f"Document already exists: {DOC_1.get('id')}"}
-@pytest.mark.slow
+
 def test_add_duplicate_document_path_auth():
     dupe = DOC_1.copy()
     dupe['id'] = None
@@ -113,7 +108,7 @@ def test_add_duplicate_document_path_auth():
 def test_get_document_auth():
     response = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'], headers=AUTH_HEADER)
     assert response.status_code == 200
-    assert response.json() == DOC_1
+    assert response.json()['id'] == DOC_1['id']
 
 def test_get_document_no_auth():
     response = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'])
@@ -126,9 +121,11 @@ def test_get_missing_document_auth():
     assert response.text == '{"detail":"Document not found: missing"}'
     assert response.json() == {'detail': "Document not found: missing"}
 
+@pytest.mark.slow
 def test_update_document_auth():
     new_doc = DOC_1.copy()
     new_doc['title'] = '**New Title'
+    print(json.dumps(new_doc, indent=2))
     response = requests.put(SERVER + PREFIX + '/documents/', headers=AUTH_HEADER, json=new_doc)
     assert response.status_code == 200
     assert response.json() == {'message': 'Document updated', 'id': new_doc['id']}

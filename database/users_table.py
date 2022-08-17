@@ -4,6 +4,7 @@ users_table.py - Users Table
 from database.db import Database
 from models.user import User
 
+COLLECTION = 'users'
 
 class UsersTable(Database):
     """
@@ -11,7 +12,7 @@ class UsersTable(Database):
     """
     def __init__(self) -> None:
         super().__init__()
-        self.collection = self.conn['falcon']['users']
+        self.collection = self.conn[self.database][COLLECTION]
 
     def get_user(self, username: str) -> User:
         """
