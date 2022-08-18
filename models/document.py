@@ -26,6 +26,7 @@ class Document(BaseModel):
     added_date: datetime = Field(default_factory=datetime.utcnow)
     updated_username: Optional[str]
     updated_date: datetime = Field(default_factory=datetime.utcnow)
+    version: Optional[str] = str(uuid4())
 
     class Config:
         orm_mode = True

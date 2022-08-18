@@ -2,6 +2,8 @@
 documents.py - Falcon API Routers for Documents
 """
 from datetime import datetime
+import json
+from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
@@ -35,6 +37,7 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document already exists: {doc.path}")
     doc.added_username = user.username
     doc.added_date = datetime.now()
+    doc.version = str(uuid4())
     documents[doc.id] = doc
     return {'message': "Document added", 'id': doc.id}
 
@@ -46,6 +49,7 @@ async def get_document(doc_id: str, user: User = Depends(get_current_active_user
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
     if doc.added_username != user.username:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    #print(json.dumps(doc.dict(), indent=2, default=str))
     return doc
 
 # Update a document
@@ -53,9 +57,13 @@ async def get_document(doc_id: str, user: User = Depends(get_current_active_user
 async def update_document(doc: Document, user: User = Depends(get_current_active_user)):
     if not doc.id in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc.id}")
+    if doc.version != documents[doc.id].version:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document version conflict: {doc.id}")
     doc.updated_username = user.username
     doc.updated_date = datetime.now()
+    doc.version = str(uuid4())
     documents[doc.id] = doc
+
     return {'message': "Document updated", 'id': doc.id}
 
 # Delete a document

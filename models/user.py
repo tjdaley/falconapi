@@ -2,6 +2,7 @@
 user.py - User model
 """
 from typing import Optional
+from uuid import uuid4
 from pydantic import BaseModel
 
 class User(BaseModel):
@@ -12,6 +13,7 @@ class User(BaseModel):
     admin: Optional[bool] = False
     token: Optional[str] = None
     hashed_password: Optional[str] = None
+    version: Optional[str] = str(uuid4())
 
     class Config:
         orm_mode = True

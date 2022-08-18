@@ -203,12 +203,24 @@ def test_add_tracker_no_id_no_auth():
     assert response.status_code == 401
 
 @pytest.mark.slow
-def test_update_tracker_auth():
+def test_update_tracker_version_fail():
     new_tracker = TRACKER_ID_123.copy()
     new_tracker['name'] = 'New Name'
-    del new_tracker['documents']    # Updates must not include documents
+    response = requests.put(SERVER + PREFIX + '/trackers', json=new_tracker, headers=AUTH_HEADER)
+    assert response.status_code == 409
+    assert response.json().get('detail') == f"Tracker version conflict: {new_tracker['id']}"
+
+def test_update_tracker_version_success():
+    response = requests.get(SERVER + PREFIX + '/trackers?tracker_id=123', headers=AUTH_HEADER)
+    assert response.status_code == 200
+    new_tracker = response.json()
+    new_tracker['name'] = '**New Name'
     response = requests.put(SERVER + PREFIX + '/trackers', json=new_tracker, headers=AUTH_HEADER)
     if response.status_code != 200:
         print(response.text)
     assert response.status_code == 200
     assert response.json().get('message') == 'Tracker updated'
+    response = requests.get(SERVER + PREFIX + '/trackers?tracker_id=123', headers=AUTH_HEADER)
+    assert response.status_code == 200
+    tracker = response.json()
+    assert tracker['name'] == '**New Name'

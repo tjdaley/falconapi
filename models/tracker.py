@@ -21,6 +21,7 @@ class Tracker(BaseModel):
     updated_username: Optional[str]
     updated_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
     auth_usernames: Optional[List[str]] = [] # List of usernames that can access this tracker.
+    version: Optional[str] = str(uuid4())
 
     class Config:
         orm_mode = True
@@ -31,7 +32,6 @@ class Tracker(BaseModel):
                 "username": "my@email.com",
                 "client_reference": "DALTHO01A",
                 "bates_pattern": "TJD \\d{6}",
-                "documents": []
             }
         }
 
@@ -51,6 +51,7 @@ class TrackerUpdate(BaseModel):
     updated_username: Optional[str]
     updated_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
     auth_usernames: Optional[List[str]] = [] # List of usernames that can access this tracker.
+    version: Optional[str] = str(uuid4())
 
     class Config:
         orm_mode = True

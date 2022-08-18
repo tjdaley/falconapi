@@ -79,7 +79,7 @@ def test_add_document_auth():
     global DEL_DOC_ID
     new_doc   = DOC_1.copy()
     del new_doc['id']
-    new_doc['path'] = 'w:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\2022-09-15 BOA 2304.pdf'
+    new_doc['path'] = 'w:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\xx2022-09-15 BOA 2304.pdf'
     response = requests.post(SERVER + PREFIX + '/documents', headers=AUTH_HEADER, json=new_doc)
     assert response.status_code == 201
     json_response = response.json()
@@ -122,13 +122,22 @@ def test_get_missing_document_auth():
     assert response.json() == {'detail': "Document not found: missing"}
 
 @pytest.mark.slow
-def test_update_document_auth():
+def test_update_document_fail_version_auth():
     new_doc = DOC_1.copy()
     new_doc['title'] = '**New Title'
     print(json.dumps(new_doc, indent=2))
     response = requests.put(SERVER + PREFIX + '/documents/', headers=AUTH_HEADER, json=new_doc)
+    assert response.status_code == 409
+    assert response.json() == {'detail': f"Document version conflict: {new_doc['id']}"}
+
+@pytest.mark.slow
+def test_update_document_success_version_auth():
+    existing_doc = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'], headers=AUTH_HEADER).json()
+    existing_doc['title'] = '**New Title'
+    print(json.dumps(existing_doc, indent=2))
+    response = requests.put(SERVER + PREFIX + '/documents/', headers=AUTH_HEADER, json=existing_doc)
     assert response.status_code == 200
-    assert response.json() == {'message': 'Document updated', 'id': new_doc['id']}
+    assert response.json() == {'message': 'Document updated', 'id': existing_doc['id']}
 
 def delete_document_auth():
     response = requests.delete(SERVER + PREFIX + '/documents/' + DEL_DOC_ID, headers=AUTH_HEADER)

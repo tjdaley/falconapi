@@ -2,6 +2,7 @@
 discovery_trackers.py - Falcon API Routers for Discovery Trackers
 """
 from datetime import datetime
+from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -73,6 +74,7 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
     tracker.added_username = user.username
     tracker.added_date = datetime.now()
     tracker.auth_usernames = [user.username]
+    tracker.version = str(uuid4())
     trackers[tracker.id] = tracker
     log_audit_event('create_tracker', tracker.id, user, new_data=tracker)
     return {'message': "Tracker created", 'id': tracker.id}
@@ -111,8 +113,12 @@ async def update_tracker(tracker: TrackerUpdate, user: User = Depends(get_curren
     if user.username not in existing_tracker.auth_usernames and not user.admin:
         log_audit_event('update_tracker', tracker.id, user, success=False, message=f"User {user.username} not authorized to update tracker {tracker.id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    if existing_tracker.version != tracker.version:
+        log_audit_event('update_tracker', tracker.id, user, success=False, message=f"Tracker {tracker.id} version mismatch")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tracker version conflict: {existing_tracker.id}")
     tracker.updated_username = user.username
     tracker.updated_date = datetime.now()
+    tracker.version = str(uuid4())
     trackers[tracker.id] = tracker
     log_audit_event('update_tracker', tracker.id, user, old_data=existing_tracker, new_data=tracker)
     return {'message': "Tracker updated", 'id': tracker.id}
