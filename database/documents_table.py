@@ -183,7 +183,8 @@ class DocumentsTable(Database):
         """
         Get a document from the database
         """
-        return self.collection.find_one({'path': path})
+        document_doc = self.collection.find_one({'path': path})
+        return Document(**document_doc) if document_doc else None
 
     def get_documents_for_tracker(self, tracker: Tracker) -> List[Document]:
         """

@@ -81,6 +81,8 @@ def test_add_document_auth():
     del new_doc['id']
     new_doc['path'] = 'w:\\shared\\plano\\tjd\\open\\farrar\\discovery\\our production\\xx2022-09-15 BOA 2304.pdf'
     response = requests.post(SERVER + PREFIX + '/documents', headers=AUTH_HEADER, json=new_doc)
+    if response.status_code != 201:
+        print(response.json())
     assert response.status_code == 201
     json_response = response.json()
     assert 'message' in json_response
@@ -105,15 +107,20 @@ def test_add_duplicate_document_path_auth():
     assert response.status_code == 409
     assert response.json() == {'detail': f"Document already exists: {DOC_1.get('path')}"}
 
-def test_get_document_auth():
+def test_get_document_by_id_auth():
     response = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'], headers=AUTH_HEADER)
     assert response.status_code == 200
     assert response.json()['id'] == DOC_1['id']
 
-def test_get_document_no_auth():
+def test_get_document_by_id_no_auth():
     response = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'])
     assert response.status_code == 401
     assert response.json() == {'detail': 'Not authenticated'}
+
+def test_get_document_by_path_auth():
+    response = requests.get(SERVER + PREFIX + '/documents/?path=' + DOC_1['path'], headers=AUTH_HEADER)
+    assert response.status_code == 200
+    assert response.json()['id'] == DOC_1['id']
 
 def test_get_missing_document_auth():
     response = requests.get(SERVER + PREFIX + '/documents/?doc_id=missing', headers=AUTH_HEADER)

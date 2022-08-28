@@ -41,16 +41,29 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
     documents[doc.id] = doc
     return {'message': "Document added", 'id': doc.id}
 
-# Get a document by ID
-@router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID')
-async def get_document(doc_id: str, user: User = Depends(get_current_active_user)):
-    doc = documents.get(doc_id)
-    if not doc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
-    if doc.added_username != user.username:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    #print(json.dumps(doc.dict(), indent=2, default=str))
-    return doc
+# Get a document by ID or path
+@router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID or path')
+async def get_document(doc_id: str = None, path: str = None, user: User = Depends(get_current_active_user)):
+    if doc_id:
+        doc = documents.get(doc_id)
+        if not doc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
+        if doc.added_username != user.username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        return doc
+
+    if path:
+        doc = documents.get_by_path(path)
+        if not doc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {path}")
+        print("*"*80)
+        print(json.dumps(doc, indent=2, default=str))
+        print("*"*80)
+        if doc.added_username != user.username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        return doc
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Must provide either doc_id or path")
 
 # Update a document
 @router.put('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update a document')
