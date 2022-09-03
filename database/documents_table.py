@@ -17,7 +17,6 @@ class DocumentsDict(dict):
         self.documents = DocumentsTable()
 
     def __getitem__(self, key):
-        print(f"Getting document {key} of type {type(key)}")
         return self.documents.get_document(key)
 
     def __setitem__(self, key, value):

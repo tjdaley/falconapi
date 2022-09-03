@@ -128,7 +128,6 @@ def test_get_missing_document_auth():
     assert response.text == '{"detail":"Document not found: missing"}'
     assert response.json() == {'detail': "Document not found: missing"}
 
-@pytest.mark.slow
 def test_update_document_fail_version_auth():
     new_doc = DOC_1.copy()
     new_doc['title'] = '**New Title'
@@ -137,7 +136,6 @@ def test_update_document_fail_version_auth():
     assert response.status_code == 409
     assert response.json() == {'detail': f"Document version conflict: {new_doc['id']}"}
 
-@pytest.mark.slow
 def test_update_document_success_version_auth():
     existing_doc = requests.get(SERVER + PREFIX + '/documents/?doc_id=' + DOC_1['id'], headers=AUTH_HEADER).json()
     existing_doc['title'] = '**New Title'
@@ -146,7 +144,46 @@ def test_update_document_success_version_auth():
     assert response.status_code == 200
     assert response.json() == {'message': 'Document updated', 'id': existing_doc['id']}
 
-def delete_document_auth():
+def test_delete_document_auth():
     response = requests.delete(SERVER + PREFIX + '/documents/' + DEL_DOC_ID, headers=AUTH_HEADER)
     assert response.status_code == 200
     assert response.json() == {'message': 'Document deleted', 'id': DEL_DOC_ID}
+
+@pytest.mark.slow
+def test_add_extended_doc_props_no_docid():
+    extended_props = {'id': 'lalala', 'text': 'This is a test'}
+    response = requests.post(SERVER + PREFIX + '/documents/props', headers=AUTH_HEADER, json=extended_props)
+    assert response.status_code == 404
+
+@pytest.mark.slow
+def test_add_extended_doc_props():
+    extended_props = {'id': DOC_1['id'], 'text': 'This is a test'}
+    response = requests.post(SERVER + PREFIX + '/documents/props', headers=AUTH_HEADER, json=extended_props)
+    assert response.status_code == 201
+    assert response.json() == {'message': 'Document properties added', 'id': DOC_1['id']}
+
+@pytest.mark.slow
+def test_get_extended_doc_props():
+    response = requests.get(SERVER + PREFIX + '/documents/props?doc_id=' + DOC_1['id'], headers=AUTH_HEADER)
+    assert response.status_code == 200
+    j =  response.json()
+    assert j['id'] == DOC_1['id']
+    assert j['text'] == 'This is a test'
+
+@pytest.mark.slow
+def test_update_extended_doc_props():
+    response = requests.get(SERVER + PREFIX + '/documents/props?doc_id=' + DOC_1['id'], headers=AUTH_HEADER)
+    assert response.status_code == 200
+    props =  response.json()
+    assert props['id'] == DOC_1['id']
+    assert props['text'] == 'This is a test'
+    props['text'] = 'This is a revised test'
+    response = requests.put(SERVER + PREFIX + '/documents/props', headers=AUTH_HEADER, json=props)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'Document properties updated', 'id': DOC_1['id']}
+
+@pytest.mark.slow
+def test_delete_extended_doc_props():
+    response = requests.delete(SERVER + PREFIX + '/documents/props/?doc_id=' + DOC_1['id'], headers=AUTH_HEADER)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'Document properties deleted', 'id': DOC_1['id']}

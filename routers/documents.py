@@ -7,10 +7,11 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
-from models.document import Document
+from models.document import Document, ExtendedDocumentProperties
 from models.response import ResponseAndId
 from models.user import User
 from database.documents_table import DocumentsDict
+from database.extendedprops_table import ExtendedPropertiesDict
 from database.trackers_table import TrackersTable
 from routers.api_version import APIVersion
 
@@ -26,6 +27,7 @@ router = APIRouter(
 )
 
 documents = DocumentsDict()
+extendedprops = ExtendedPropertiesDict()
 trackers = TrackersTable()
 
 # Add a document
@@ -41,6 +43,16 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
     documents[doc.id] = doc
     return {'message': "Document added", 'id': doc.id}
 
+# Add extended document properties
+@router.post('/props', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary="Add extended document properties")
+async def add_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
+    if props.id not in documents:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {props.id}")
+    if props.id in extendedprops:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Extended properties already exist for document: {props.id}")
+    extendedprops[props.id] = props
+    return {'message': "Document properties added", 'id': props.id}
+
 # Get a document by ID or path
 @router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID or path')
 async def get_document(doc_id: str = None, path: str = None, user: User = Depends(get_current_active_user)):
@@ -48,7 +60,7 @@ async def get_document(doc_id: str = None, path: str = None, user: User = Depend
         doc = documents.get(doc_id)
         if not doc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
-        if doc.added_username != user.username:
+        if doc.added_username != user.username and not user.admin:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
         return doc
 
@@ -56,14 +68,20 @@ async def get_document(doc_id: str = None, path: str = None, user: User = Depend
         doc = documents.get_by_path(path)
         if not doc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {path}")
-        print("*"*80)
-        print(json.dumps(doc, indent=2, default=str))
-        print("*"*80)
-        if doc.added_username != user.username:
+        if doc.added_username != user.username and not user.admin:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
         return doc
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Must provide either doc_id or path")
+
+# Get extended document properties
+@router.get('/props', status_code=status.HTTP_200_OK, response_model=ExtendedDocumentProperties, summary='Get extended document properties')
+async def get_document_props(doc_id: str, user: User = Depends(get_current_active_user)):
+    if doc_id not in extendedprops:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
+    if documents[doc_id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return extendedprops[doc_id]
 
 # Update a document
 @router.put('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update a document')
@@ -72,12 +90,24 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc.id}")
     if doc.version != documents[doc.id].version:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document version conflict: {doc.id}")
+    if documents[doc.id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     doc.updated_username = user.username
     doc.updated_date = datetime.now()
     doc.version = str(uuid4())
     documents[doc.id] = doc
 
     return {'message': "Document updated", 'id': doc.id}
+
+# Update extended document properties
+@router.put('/props', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update extended document properties')
+async def update_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
+    if props.id not in extendedprops:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {props.id}")
+    if documents[props.id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    extendedprops[props.id] = props
+    return {'message': "Document properties updated", 'id': props.id}
 
 # Delete a document
 # TODO: Do not delete a document if it is in other trackers - Switch.
@@ -95,6 +125,7 @@ async def delete_document(doc_id: str, cascade: bool = 'true', user: User = Depe
     # This document is not in other trackers, so we can delete it.
     if not trackers_linked_to_doc:
         del documents[doc_id]
+        del extendedprops[doc_id]
         return {'message': "Document deleted", 'id': doc_id}
     
     # This document is in other trackers but the cascade flag is set to false - we cannot delete it.
@@ -104,4 +135,15 @@ async def delete_document(doc_id: str, cascade: bool = 'true', user: User = Depe
     # This document is in other trackers and the cascade flag is set to true - we can delete it.
     del documents[doc_id]
     trackers.delete_document_from_trackers(doc_id)
+    del extendedprops[doc_id]
     return {'message': "Document deleted", 'id': doc_id}
+
+# Delete extended document properties
+@router.delete('/props', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete extended document properties')
+async def delete_document_props(doc_id: str, user: User = Depends(get_current_active_user)):
+    if doc_id not in extendedprops:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
+    if documents[doc_id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    del extendedprops[doc_id]
+    return {'message': "Document properties deleted", 'id': doc_id}
