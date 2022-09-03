@@ -189,11 +189,9 @@ class DocumentsTable(Database):
         """
         Get all documents for a tracker
         """
-        docs = []
-        for doc_id in tracker.documents:
-            docs.append(self.get_document(doc_id))
+        docs = list(self.collection.find({'id':{'$in': tracker.documents}}))
         return docs
-    
+
     def get_count(self) -> int:
         """
         Get the number of documents in the database
