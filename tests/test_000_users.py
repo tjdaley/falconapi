@@ -4,7 +4,7 @@ test_root.py - Test the root endpoint
 import requests
 
 API_VERSION = '1_0'
-SERVER = 'http://localhost:8000'
+SERVER = 'https://api.jdbot.us'
 PREFIX = f'/api/v{API_VERSION}'
 
 
