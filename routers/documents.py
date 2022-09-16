@@ -92,10 +92,21 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document version conflict: {doc.id}")
     if documents[doc.id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    doc.updated_username = user.username
-    doc.updated_date = datetime.now()
-    doc.version = str(uuid4())
-    documents[doc.id] = doc
+
+    # Mark document as being updated
+    updated_doc = documents.get(doc.id)
+    updated_doc.updated_username = user.username
+    updated_doc.updated_date = datetime.now()
+    updated_doc.version = str(uuid4())
+
+    # We don't let the caller update every field...just these:
+    updated_doc.beginning_bates = doc.beginning_bates
+    updated_doc.document_date = doc.document_date
+    updated_doc.ending_bates = doc.ending_bates
+    updated_doc.page_count = doc.page_count
+    updated_doc.title = doc.title
+    updated_doc.type = doc.type
+    documents[doc.id] = updated_doc
 
     return {'message': "Document updated", 'id': doc.id}
 

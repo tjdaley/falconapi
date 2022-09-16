@@ -2,6 +2,7 @@
 document.py - Description of a document
 """
 from datetime import datetime
+from optparse import Option
 from typing import Optional, List
 from uuid import uuid4
 from pydantic import BaseModel, Field
@@ -10,6 +11,10 @@ from pydantic import BaseModel, Field
 class Document(BaseModel):
     """
     Document model
+
+    NOTE: The POST method in the doucments router does NOT update every field. If you add
+    a field to this class AND you want the end user to be able to update that value in that
+    field, you must make a corresponding change to the documents router's POST method.
     """
     id: Optional[str] = str(uuid4())
     path: str
@@ -55,5 +60,6 @@ class ExtendedDocumentProperties(BaseModel):
     id: str         # The id of the associated document, which much already be in the documents collection
     images: Optional[List[str]]
     text: Optional[str]
+    clean_text: Optional[str]
     props: Optional[dict]
     version: Optional[str] = str(uuid4())
