@@ -98,7 +98,7 @@ Raises:
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     invalid_credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Credentials are invalid (missing sub)",
+        detail="Credentials are invalid (missing sub aka username)",
         headers={"WWW-Authenticate": "Bearer"},
     )
     decode_credentials_exception = HTTPException(
@@ -108,7 +108,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     user_credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Unable to find user",
+        detail="Unable to find user in database",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
