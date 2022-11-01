@@ -7,6 +7,7 @@ https://grafana.com/blog/2022/05/10/how-to-collect-prometheus-metrics-with-the-o
 """
 from sys import prefix
 from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 from routers.api_version import APIVersion
 from routers.documents import router as documents
 from routers.discovery_trackers import router as discovery_trackers
@@ -25,6 +26,14 @@ app = FastAPI(
     description=COPYRIGHT,
     version=API_VERSION,
     prefix=API_VERSION_PREFIX,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
 app.include_router(discovery_trackers, prefix=API_VERSION_PREFIX)
