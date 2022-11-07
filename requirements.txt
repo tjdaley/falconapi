@@ -1,10 +1,14 @@
+boto3==1.25.5
 fastapi==0.85.1
-jose==1.0.0
 msal==1.20.0
+bcrypt==4.0.1
 passlib==1.7.4
 pydantic==1.10.2
 PyJWT==2.6.0
+python-jose==3.3.0
+python-multipart==0.0.5
 pymongo==4.3.2
 pytest==7.2.0
 python-dotenv==0.21.0
 requests==2.27.1
+uvicorn==0.19.0

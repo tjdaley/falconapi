@@ -46,19 +46,23 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
 # Add extended document properties
 @router.post('/props', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary="Add extended document properties")
 async def add_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
-    if props.id not in documents:
+    document_id = props.id  # Link to document for these props
+
+    if document_id not in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {props.id}")
     
+    # If the document already has extended properties, we need to update them.
     verb = 'added'
-    if props.id in extendedprops:
-        existing_props = extendedprops[props.id]
-        for key in props:
-            existing_props[key] = props[key]
-        props = existing_props
+    if document_id in extendedprops:
+        existing_props = extendedprops[document_id]
+        for key, value in props:
+            existing_props[key] = props.__dict__.get(key)
+        props = ExtendedDocumentProperties(**existing_props)
         verb = 'updated'
-        # raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Extended properties already exist for document: {props.id}")
-    extendedprops[props.id] = props
-    return {'message': f"Document properties {verb}", 'id': props.id}
+
+    # Add the extended properties
+    extendedprops[document_id] = props
+    return {'message': f"Document properties {verb}", 'id': document_id}
 
 # Get a document by ID or path
 @router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID or path')
