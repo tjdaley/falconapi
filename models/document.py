@@ -64,3 +64,4 @@ class ExtendedDocumentProperties(BaseModel):
     props: Optional[dict]
     version: Optional[str] = str(uuid4())
     job_id: Optional[str] = None
+    extraction_type: Optional[str] = None
