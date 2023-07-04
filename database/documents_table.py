@@ -70,6 +70,18 @@ class DocumentsDict(dict):
         """
         return self.documents.get_documents_for_tracker(tracker)
     
+    def get_categories_for_tracker(self, tracker) -> List[str]:
+        """
+        Get all categories of documents for a tracker
+        """
+        return self.documents.get_categories_for_tracker(tracker)
+    
+    def get_category_subcategory_pairs_for_tracker(self, tracker) -> List[str]:
+        """
+        Get all subcategories of documents for a tracker
+        """
+        return self.documents.get_category_subcategory_pairs_for_tracker(tracker)
+    
 class DocumentsTable(Database):
     """
     Class for interacting with the documents table
@@ -80,6 +92,7 @@ class DocumentsTable(Database):
         """
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
+        self.xprops = self.conn[self.database]['extendedprops']
 
     def get_document(self, id: str) -> Document:
         """
@@ -197,3 +210,37 @@ class DocumentsTable(Database):
         Get the number of documents in the database
         """
         return self.collection.count_documents({})
+    
+    def get_categories_for_tracker(self, tracker) -> List[str]:
+        """
+        Get all categories of documents for a tracker.
+
+        I'm accessing the extendedprops collection directly here because I think
+        I'm going to migrate the category and subcategory fields to the documents
+        collection.
+        """
+        categories = self.xprops.distinct('classification', {'id':{'$in': tracker.documents}})
+        return sorted(list(set([category for category in categories if category])))
+    
+    def get_category_subcategory_pairs_for_tracker(self, tracker) -> List[str]:
+        """
+        Get all subcategories of documents for a tracker.
+
+        I'm accessing the extendedprops collection directly here because I think
+        I'm going to migrate the category and subcategory fields to the documents
+        collection.
+        """
+        subcategories = self.xprops.aggregate(
+            [
+                {'$match': {'id':{'$in': tracker.documents}}},
+                {'$group': {
+                    '_id': {'category': '$classification', 'subcategory': '$subclassification'},
+                    'count': {'$sum': 1}
+                    }
+                },
+            ]
+        )
+        result = [{'category': doc['_id']['category'], 'subcategory':doc['_id']['subcategory'], 'count': doc['count']} for doc in subcategories]
+        result = sorted(result, key=lambda x: f"{x['category']}::{x['subcategory']}")
+        print(result)
+        return result

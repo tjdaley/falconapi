@@ -65,3 +65,20 @@ class ExtendedDocumentProperties(BaseModel):
     version: Optional[str] = str(uuid4())
     job_id: Optional[str] = None
     extraction_type: Optional[str] = None
+
+class CategorySubcategoryResponse(BaseModel):
+    """
+    Response for a category/subcategory pair
+    """
+    category: str
+    subcategory: str
+    count: Optional[int] = 0
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "category": "category1",
+                "subcategory": "subcategory1",
+                "count": 1
+            }
+        }

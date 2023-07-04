@@ -10,7 +10,7 @@ from typing import List
 import os
 from auth.handler import get_current_active_user
 from models.audit import Audit
-from models.document import Document
+from models.document import Document, CategorySubcategoryResponse
 from models.response import Response, ResponseAndId
 from models.tracker import Tracker, TrackerUpdate
 from models.user import User
@@ -214,3 +214,29 @@ async def get_documents(tracker_id: str, user: User = Depends(get_current_active
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     log_audit_event('get_documents', tracker_id, user)
     return documents.get_for_tracker(tracker)
+
+# Get list of unique categories from a tracker
+@router.get('/{tracker_id}/categories', status_code=status.HTTP_200_OK, response_model=List[str], summary='Get all categories of documents from a tracker')
+async def get_categories(tracker_id: str, user: User = Depends(get_current_active_user)):
+    tracker = trackers.get(tracker_id)
+    if tracker is None:
+        log_audit_event('get_categories', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('get_categories', tracker_id, user, success=False, message=f"User {user.username} not authorized to get categories from tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    log_audit_event('get_categories', tracker_id, user)
+    return documents.get_categories_for_tracker(tracker)
+
+# Get a list of unique category+subcategory pairs from a tracker
+@router.get('/{tracker_id}/category_subcategory_pairs', status_code=status.HTTP_200_OK, response_model=List[CategorySubcategoryResponse], summary='Get all category+subcategory pairs from a tracker')
+async def get_category_subcategory_pairs(tracker_id: str, user: User = Depends(get_current_active_user)):
+    tracker = trackers.get(tracker_id)
+    if tracker is None:
+        log_audit_event('get_category_subcategory_pairs', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('get_category_subcategory_pairs', tracker_id, user, success=False, message=f"User {user.username} not authorized to get category+subcategory pairs from tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    log_audit_event('get_category_subcategory_pairs', tracker_id, user)
+    return documents.get_category_subcategory_pairs_for_tracker(tracker)
