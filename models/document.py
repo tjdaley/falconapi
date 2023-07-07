@@ -3,7 +3,7 @@ document.py - Description of a document
 """
 from datetime import datetime
 from optparse import Option
-from typing import Optional, List
+from typing import Optional, List, Union
 from uuid import uuid4
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,7 @@ class Document(BaseModel):
     type: str
     title: str
     create_date: str
-    document_date: Optional[str]
+    document_date: Optional[Union[str, datetime]]
     beginning_bates: Optional[str]
     ending_bates: Optional[str]
     page_count: Optional[int]
