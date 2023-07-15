@@ -66,6 +66,14 @@ class ExtendedDocumentProperties(BaseModel):
     job_id: Optional[str] = None
     extraction_type: Optional[str] = None
 
+class DocumentTables(BaseModel):
+    """
+    Tables for a document
+    """
+    id: str  # The id of the associated document, which much already be in the extendedprops collection
+    csv_tables: Optional[dict]
+    version: Optional[str] = str(uuid4())
+
 class CategorySubcategoryResponse(BaseModel):
     """
     Response for a category/subcategory pair
