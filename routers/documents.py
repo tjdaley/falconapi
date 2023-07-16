@@ -7,7 +7,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
-from models.document import Document, ExtendedDocumentProperties, DocumentTables
+from models.document import Document, ExtendedDocumentProperties, DocumentCsvTables, DocumentObjTables
 from models.response import ResponseAndId
 from models.user import User
 from database.documents_table import DocumentsDict
@@ -94,8 +94,16 @@ async def get_document_props(doc_id: str, user: User = Depends(get_current_activ
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     return extendedprops[doc_id]
 
-# Get a document's Tables
-@router.get('/tables', status_code=status.HTTP_200_OK, response_model=DocumentTables, summary='Get a document\'s Tables')
+# Get a document's Tables - CSV or JSON Formats
+@router.get('/tables/csv', status_code=status.HTTP_200_OK, response_model=DocumentCsvTables, summary='Get a document\'s Tables in CSV format')
+async def get_document_tables(doc_id: str, user: User = Depends(get_current_active_user)):
+    if doc_id not in extendedprops:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
+    if documents[doc_id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return extendedprops[doc_id]
+
+@router.get('/tables/json', status_code=status.HTTP_200_OK, response_model=DocumentObjTables, summary='Get a document\'s Tables in JSON format')
 async def get_document_tables(doc_id: str, user: User = Depends(get_current_active_user)):
     if doc_id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
