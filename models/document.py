@@ -79,7 +79,7 @@ class DocumentObjTables(BaseModel):
     Tables for a document
     """
     id: str  # The id of the associated document, which much already be in the extendedprops collection
-    obj_tables: Optional[dict]
+    dict_tables: Optional[dict]
     version: Optional[str] = str(uuid4())
 
 class CategorySubcategoryResponse(BaseModel):
