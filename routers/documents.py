@@ -109,6 +109,12 @@ async def get_document_tables(doc_id: str, user: User = Depends(get_current_acti
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    # Some older documents were saved with a list of tables, not a dict of tables
+    if not isinstance(extendedprops[doc_id]['dict_tables'], dict):
+        tables = {"tables": {e['table_id']: e for e in extendedprops[doc_id]['dict_tables']}}
+        props = extendedprops[doc_id].copy()
+        props['dict_tables'] = tables
+        return props
     return extendedprops[doc_id]
 
 # Update a document
