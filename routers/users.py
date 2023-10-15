@@ -26,102 +26,90 @@ router = APIRouter(
 
 # Class for responding to user registration
 class InsertException(BaseModel):
+    """A class for responding to user registration errors"""
     detail: Optional[str] = "User already exists"
 
-"""
-Verify that the password we received, when hashed, matches the hashed password in the database.
-
-Args:
-    plain_password (str): The password we received from the client.
-    hashed_password (str): The hashed password stored in the database.
-
-Returns:
-    bool: True if the passwords match, False otherwise.
-"""
 def verify_password(plain_password, hashed_password) -> bool:
+    """
+    Verify that the password we received, when hashed, matches the hashed password in the database.
+
+    Args:
+        plain_password (str): The password we received from the client.
+        hashed_password (str): The hashed password stored in the database.
+
+    Returns:
+        bool: True if the passwords match, False otherwise.
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
-"""
-Hash the password before storing it in the database.
-
-Args:
-    password (str): The password we received from the client.
-
-Returns:
-    str: The hashed password.
-"""
 def get_password_hash(password) -> str:
+    """
+    Hash the password before storing it in the database.
+
+    Args:
+        password (str): The password we received from the client.
+
+    Returns:
+        str: The hashed password.
+    """
     return pwd_context.hash(password)
 
-"""
-Authenticate a user with username and password.
-
-Args:
-    username (str): The username we received from the client.
-    password (str): The password we received from the client.
-
-Returns:
-    User: The user object if the username and password match, None otherwise.
-"""
 def authenticate_user(username: str, password: str) -> User:
+    """
+    Authenticate a user with username and password.
+
+    Args:
+        username (str): The username we received from the client.
+        password (str): The password we received from the client.
+
+    Returns:
+        User: The user object if the username and password match, None otherwise.
+    """
     user = USERS_TABLE.get_user_by_username(username)
     if not user:
-        return False
+        return None
     if not verify_password(password, user.hashed_password):
-        return False
+        return None
     return user
 
-"""
-Authenticate a user with username and password.
-
-Args: (in formdata)
-    username (str): The username we received from the client. 
-    password (str): The password we received from the client.
-
-Returns:
-    dict: 'access_token' and 'token_type' if the username and password match, otherwise an error message.
-
-Raises:
-    HTTPException: If the username or password is invalid.
-"""
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
+    """
+    Authenticate a user with token.
+
+    Args: (in formdata)
+        response_model (Token): The token we received from the client. 
+
+    Returns:
+        dict: 'access_token' and 'token_type' if the username and password match, otherwise an error message.
+
+    Raises:
+        HTTPException: If the username or password is invalid.
+    """
     user = authenticate_user(form_data.username, form_data.password)
-    if not user:
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     token_response = create_access_token(user.username)
     return token_response
 
-"""
-Return current user's information.
-
-Args:
-    None (token is provided in the Authorization header)
-
-Returns:
-    User: The User object if the user is active, None otherwise.
-"""
 @router.get("/me")
 async def read_users_me(current_user: User = Depends(get_current_active_user)) -> User:
-    return current_user
-
-"""
-Register a new user
+    """
+    Return current user's information.
 
     Args:
-        user_registration (UserRegistration): The user registration data we received from the client.
+        None (token is provided in the Authorization header)
 
     Returns:
-        RegistrationResponse: The user registration data if the user was created, None otherwise.
+        User: The User object if the user is active, None otherwise.
+    """
+    return current_user
 
-    Raises:
-        HTTPException: If the user already exists.
-"""
 @router.post(
     '/register',
     status_code=status.HTTP_201_CREATED,
@@ -130,6 +118,18 @@ Register a new user
     summary="Register a new user"
 )
 async def register_user(user_registration: UserRegistration) -> RegistrationResponse:
+    """
+    Register a new user
+
+        Args:
+            user_registration (UserRegistration): The user registration data we received from the client.
+
+        Returns:
+            RegistrationResponse: The user registration data if the user was created, None otherwise.
+
+        Raises:
+            HTTPException: If the user already exists.
+    """
     user = USERS_TABLE.get_user_by_username(user_registration.username)
     if user:
         raise HTTPException(status_code=400, detail="User already exists")
