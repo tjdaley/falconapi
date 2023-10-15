@@ -45,17 +45,18 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
 
 # Add extended document properties
 @router.post('/props', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary="Add extended document properties")
+# pylint: disable=unused-argument
 async def add_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
     document_id = props.id  # Link to document for these props
 
     if document_id not in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {props.id}")
-    
+
     # If the document already has extended properties, we need to update them.
     verb = 'added'
     if document_id in extendedprops:
         existing_props = extendedprops[document_id]
-        for key, value in props:
+        for key, _ in props:
             existing_props[key] = props.__dict__.get(key)
         props = ExtendedDocumentProperties(**existing_props)
         verb = 'updated'
@@ -96,7 +97,7 @@ async def get_document_props(doc_id: str, user: User = Depends(get_current_activ
 
 # Get a document's Tables - CSV or JSON Formats
 @router.get('/tables/csv', status_code=status.HTTP_200_OK, response_model=DocumentCsvTables, summary='Get a document\'s Tables in CSV format')
-async def get_document_tables(doc_id: str, user: User = Depends(get_current_active_user)):
+async def get_document_tables_csv(doc_id: str, user: User = Depends(get_current_active_user)):
     if doc_id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
@@ -104,7 +105,7 @@ async def get_document_tables(doc_id: str, user: User = Depends(get_current_acti
     return extendedprops[doc_id]
 
 @router.get('/tables/json', status_code=status.HTTP_200_OK, response_model=DocumentObjTables, summary='Get a document\'s Tables in JSON format')
-async def get_document_tables(doc_id: str, user: User = Depends(get_current_active_user)):
+async def get_document_tables_json(doc_id: str, user: User = Depends(get_current_active_user)):
     if doc_id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
@@ -178,11 +179,11 @@ async def delete_document(doc_id: str, cascade: bool = 'true', user: User = Depe
         del documents[doc_id]
         del extendedprops[doc_id]
         return {'message': "Document deleted", 'id': doc_id}
-    
+
     # This document is in other trackers but the cascade flag is set to false - we cannot delete it.
     if not should_cascade:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document is in trackers: {trackers_linked_to_doc}")
-    
+
     # This document is in other trackers and the cascade flag is set to true - we can delete it.
     del documents[doc_id]
     trackers.delete_document_from_trackers(doc_id)
