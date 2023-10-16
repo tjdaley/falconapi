@@ -98,3 +98,24 @@ class CategorySubcategoryResponse(BaseModel):
                 "count": 1
             }
         }
+
+class DocumentClassificationStatus(BaseModel):
+    """
+    Status of a document classification task
+    """
+    task_id: Optional[str]
+    document_id: str
+    status: str  ## {'QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED'}
+    message: Optional[str]
+    classification: Optional[dict]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "task_id": "60a5c7d4b8a8e1f0f1c1b5d1 OR None if called synchronously",
+                "document_id": "e7e4fb7c-4d54-44b6-88d6-50509ff677cc",
+                "status": "QUEUED",
+                "message": "Document classification task has been queued.",
+                "classification": None
+            }
+        }
