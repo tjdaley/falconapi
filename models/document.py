@@ -65,6 +65,8 @@ class ExtendedDocumentProperties(BaseModel):
     version: Optional[str] = str(uuid4())
     job_id: Optional[str] = None
     extraction_type: Optional[str] = None
+    job_status: Optional[str] = None
+    pages: Optional[int]
 
 class DocumentCsvTables(BaseModel):
     """
