@@ -5,7 +5,7 @@ from datetime import datetime
 from optparse import Option
 from typing import Optional, List, Union
 from uuid import uuid4
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
 
 class Document(BaseModel):
@@ -67,6 +67,48 @@ class ExtendedDocumentProperties(BaseModel):
     extraction_type: Optional[str] = None
     job_status: Optional[str] = None
     pages: Optional[int]
+    tables: Optional[dict] = Field(
+        None,
+        alias="dict_tables",  # database field name is dict_tables, mapped to tables in the model
+        exclude=True,
+        description="Always None. Call the documents/tables/csv or documents/tables/json endpoint to get the tables for a document."
+        )
+    has_tables: Optional[bool] = False
+
+    @property
+    def has_tables(self) -> bool:
+        if self.dict_tables:
+            tables = self.dict_tables.get('tables', [])
+            return bool(tables)
+        return False
+    
+    @root_validator(pre=True)
+    def exclude_tables(cls, values):
+        values.pop('dict_tables', None)
+        return values
+    
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "id": "doc-1",
+                "images": [],
+                "text": "This is the [text] of the document!!",
+                "clean_text": "this is the text of the document",
+                "props": {
+                    "prop1": "value1",
+                    "prop2": "value2"
+                },
+                "version": "dkf9kfk9jk4kf8glk",
+                "job_id": "60a5c7d4b8a8e1f0f1c1b5d1",
+                "extraction_type": "ANALYSIS",
+                "job_status": "COMPLETED",
+                "pages": 9,
+                "tables": None,
+                "has_tables": True
+            }
+        }
+
 
 class DocumentCsvTables(BaseModel):
     """
@@ -81,8 +123,72 @@ class DocumentObjTables(BaseModel):
     Tables for a document
     """
     id: str  # The id of the associated document, which much already be in the extendedprops collection
-    dict_tables: Optional[dict]
+    json_tables: Optional[dict] = Field(alias="dict_tables")
     version: Optional[str] = str(uuid4())
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "id": "doc-1",
+                "json_tables": {
+                    "tables": [
+                        {
+                            "table_id": "table-1",
+                            "column_count": 3,
+                            "rows": [
+                                [
+                                    {
+                                        "text": "Row 1 Column 1",
+                                    },
+                                    {
+                                        "text": "Row 1 Column 2",
+                                    },
+                                    {
+                                        "text": "Row 1 Column 3"
+                                    }
+                                ],
+                                [
+                                    {
+                                        "text": "Row 2 Column 1",
+                                    },
+                                    {
+                                        "text": "Row 2 Column 2",
+                                    },
+                                    {
+                                        "text": "Row 2 Column 3"
+                                    }
+                                ]
+                            ]
+                        },
+                        {
+                            "table_id": "table-2",
+                            "column_count": 2,
+                            "rows": [
+                                [
+                                    {
+                                        "text": "Row 1 Column 1",
+                                    },
+                                    {
+                                        "text": "Row 1 Column 2",
+                                    }
+                                ],
+                                [
+                                    {
+                                        "text": "Row 2 Column 1",
+                                    },
+                                    {
+                                        "text": "Row 2 Column 2",
+                                    }
+                                ]
+                            ]
+                        }
+                    ]
+                },
+                "version": "dkf9kfk9jk4kf8glk"
+            }
+        }
+
 
 class CategorySubcategoryResponse(BaseModel):
     """

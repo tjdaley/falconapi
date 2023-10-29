@@ -102,7 +102,7 @@ async def get_document_props(doc_id: str, user: User = Depends(get_current_activ
     return extendedprops[doc_id]
 
 # Get document classification - Synchrnous
-@router.get('/classify/sync', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Get document classification synchronously')
+@router.get('/classifysync', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Get document classification synchronously')
 async def get_document_classify_sync(doc_id: str, background_tasks: BackgroundTasks, user: User = Depends(get_current_active_user)):
     if doc_id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
