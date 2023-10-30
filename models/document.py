@@ -75,16 +75,11 @@ class ExtendedDocumentProperties(BaseModel):
         )
     has_tables: Optional[bool] = False
 
-    @property
-    def has_tables(self) -> bool:
-        if self.dict_tables:
-            tables = self.dict_tables.get('tables', [])
-            return bool(tables)
-        return False
-    
     @root_validator(pre=True)
     def exclude_tables(cls, values):
-        values.pop('dict_tables', None)
+        if not values.get('has_tables'):
+            values['has_tables'] = values.get('dict_tables') is not None
+            values.pop('dict_tables', None)
         return values
     
     class Config:
