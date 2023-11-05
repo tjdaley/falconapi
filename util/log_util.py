@@ -8,22 +8,14 @@ def get_logger(name: str) -> logging.Logger:
 	"""
 	Return a logger object
 	"""
-	level = convert_level(os.environ.get('LOG_LEVEL', 'INFO').upper())
+	if 'SYSTEMD_INVOCATION' in os.environ:
+		logging.basicConfig(format='%(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+		level = convert_level(os.environ.get('LOG_LEVEL', 'INFO').upper())
+	else:
+		logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+		level=logging.DEBUG
 	logger = logging.getLogger(name)
 	logger.setLevel(level)
-
-	# Create console handler
-	ch = logging.StreamHandler()
-	ch.setLevel(level)
-
-	# Create formatter
-	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-	# Add formatter to console handler
-	ch.setFormatter(formatter)
-
-	# Add console handler to logger
-	logger.addHandler(ch)
 
 	return logger
 
