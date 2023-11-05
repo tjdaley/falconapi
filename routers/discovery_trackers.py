@@ -101,6 +101,7 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
     message = f"get_trackers_for_user: username={username} by user={user.username}"
     LOGGER.info(message)
     print(message)
+    exit()
     if username is None:
         username = user.username
     if user.admin or user.username == username:
