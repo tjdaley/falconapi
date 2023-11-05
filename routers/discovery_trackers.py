@@ -2,7 +2,6 @@
 discovery_trackers.py - Falcon API Routers for Discovery Trackers
 """
 from datetime import datetime
-import logging
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -19,12 +18,14 @@ from database.audit_table import AuditTable
 from database.trackers_table import TrackersDict
 from database.documents_table import DocumentsDict
 from routers.api_version import APIVersion
+from util.log_util import get_logger
 import settings  # NOQA
 
 
 API_VERSION = APIVersion(1, 0).to_str()
 ROUTE_PREFIX = '/trackers'
-LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
+LOGGER = get_logger(f'falconapi{ROUTE_PREFIX}')
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/token')
 
 router = APIRouter(
@@ -86,9 +87,11 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
 async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
     if not tracker:
+        LOGGER.info("Tracker %s not found", tracker_id)
         log_audit_event('get_tracker', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
     if user.username not in tracker.auth_usernames and not user.admin:
+        LOGGER.info("User %s not authorized to get tracker %s", user.username, tracker_id)
         log_audit_event('get_tracker', tracker_id, user, success=False, message=f"User {user.username} not authorized to get tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     log_audit_event('get_tracker', tracker_id, user)
