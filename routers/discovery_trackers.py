@@ -99,7 +99,7 @@ async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_u
 @router.get('/user', status_code=status.HTTP_200_OK, response_model=List[Tracker], summary='Get all trackers for a user')
 async def get_trackers_for_user(username: str = None, user: User = Depends(get_current_active_user)):
     message = f"get_trackers_for_user: username={username} by user={user.username}. Requesting user is admin={user.admin}"
-    logger = get_logger(f'falconapi{ROUTE_PREFIX}')
+    logger = get_logger('goddammit')  # f'falconapi{ROUTE_PREFIX}')
     logger.warn(message)
     print(message)
     if username is None:
