@@ -2,6 +2,7 @@
 discovery_trackers.py - Falcon API Routers for Discovery Trackers
 """
 from datetime import datetime
+import logging
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -23,6 +24,7 @@ import settings  # NOQA
 
 API_VERSION = APIVersion(1, 0).to_str()
 ROUTE_PREFIX = '/trackers'
+LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/token')
 
 router = APIRouter(
@@ -36,7 +38,7 @@ trackers = TrackersDict()
 documents = DocumentsDict()
 
 AUDIT_LOGGING_ENABLED = os.getenv('AUDIT_LOGGING_ENABLED', 'False').lower() == 'true'
-print(f"AUDIT_LOGGING_ENABLED: {AUDIT_LOGGING_ENABLED}")
+LOGGER.info("AUDIT_LOGGING_ENABLED: %s", AUDIT_LOGGING_ENABLED)
 
 # Log an audit event
 def log_audit_event(event: str, doc_id: str, user: User, old_data: BaseModel = None, new_data: BaseModel = None, success: bool = True, message: str = None) -> None:
@@ -63,7 +65,7 @@ def log_audit_event(event: str, doc_id: str, user: User, old_data: BaseModel = N
         )
         audittable.create_event(audit)
     else:
-        print(f"AUDIT_LOGGING_ENABLED is False, so not logging audit event: {event}")
+        LOGGER.info("AUDIT_LOGGING_ENABLED is False, so not logging audit event: %s", event)
 
 # Add a tracker
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary='Create a tracker')
@@ -101,6 +103,8 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
         log_audit_event(f'get_trackers_for_user::{username}', '', user)
         return trackers.get_for_username(username)
 
+    log_audit_event(f'get_trackers_for_user::{username}', '', user, success=False, message=f"User {user.username} not authorized to get trackers for user {username}")
+    LOGGER.warning("User %s not authorized to get trackers for user %s", user.username, username)
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
 # Update a tracker

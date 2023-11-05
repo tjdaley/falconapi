@@ -20,8 +20,8 @@ from doc_classifier.palm_classifier import Classifier as PalmClassifier
 
 
 API_VERSION = APIVersion(1, 0).to_str()
-LOGGER = logging.getLogger('falconapi')
 ROUTE_PREFIX = '/documents'
+LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
 OPENAICLASSIFIER = OpenAIClassifier()
 PALMCLASSIFIER = PalmClassifier()
 CLASSIFICATION_TASKS = ClassificationTasksTable()
