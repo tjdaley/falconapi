@@ -4,6 +4,7 @@ db.py - Database Access
 import os
 from pymongo import MongoClient
 import settings  # NOQA
+from util.log_util import get_logger
 
 
 class Database():
@@ -14,10 +15,11 @@ class Database():
     database = os.getenv('DATABASE_NAME', 'falcon')
 
     def __init__(self, fail_silent: bool = True) -> None:
+        logger = get_logger('falconapi/db.py')
         db_url = os.getenv('DB_URL', 'mongodb://localhost:27017')
         if not Database.conn:
             Database.conn = MongoClient(db_url)
-            print("Connected to database at {}".format(db_url))
+            logger.info("Connected to database at {}".format(db_url))
         self.fail_silent = fail_silent
     
     def insert_one_result(self, inserted_id: str = None) -> dict:
