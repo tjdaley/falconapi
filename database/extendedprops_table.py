@@ -95,7 +95,7 @@ class ExtendedPropertiesTable(Database):
         """
         Update extended properties
         """
-        if isinstance(extendedprops, ExtendedPropertiesDict):
+        if isinstance(extendedprops, ExtendedDocumentProperties):
             d = extendedprops.dict()
             id = d.id
         else:
