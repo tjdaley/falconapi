@@ -221,7 +221,7 @@ async def delete_document_table(doc_id: str, table_id: str, user: User = Depends
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Dict Table not found: {table_id}")
     del xprops.get('csv_tables', {})[table_id]
     # synchornizes the datastore with the extendedprops dict
-    extendedprops[doc_id] = xprops
+    extendedprops[doc_id] = ExtendedDocumentProperties(**xprops)
 
     return {'message': "Table deleted", 'id': table_id}
 

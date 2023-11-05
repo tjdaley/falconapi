@@ -95,13 +95,8 @@ class ExtendedPropertiesTable(Database):
         """
         Update extended properties
         """
-        if isinstance(extendedprops, ExtendedDocumentProperties):
-            d = extendedprops.dict()
-            id = d.id
-        else:
-            d = extendedprops
-            id = d.get('id')
-        # id = d.get('id')
+        d = extendedprops.dict()
+        id = d.get('id')
         return self.collection.replace_one({'id': id}, d)
 
     def delete(self, id):
