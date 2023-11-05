@@ -4,6 +4,7 @@ extendedprops_table.py - Extended Properties Table
 
 from database.documents_table import COLLECTION
 from database.db import Database
+from models.document import ExtendedDocumentProperties
 
 
 COLLECTION = 'extendedprops'
@@ -90,15 +91,17 @@ class ExtendedPropertiesTable(Database):
         """
         return self.collection.insert_one(extendedprops.dict())
 
-    def update(self, extendedprops):
+    def update(self, extendedprops: ExtendedDocumentProperties):
         """
         Update extended properties
         """
         if isinstance(extendedprops, ExtendedPropertiesDict):
             d = extendedprops.dict()
+            id = d.id
         else:
             d = extendedprops
-        id = d.get('id')
+            id = d.get('id')
+        # id = d.get('id')
         return self.collection.replace_one({'id': id}, d)
 
     def delete(self, id):
