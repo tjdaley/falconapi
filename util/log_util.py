@@ -3,7 +3,6 @@ log_util.py - Logging utilities
 """
 import logging
 import os
-import psutil
 
 def get_logger(name: str) -> logging.Logger:
 	"""
