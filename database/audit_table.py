@@ -24,5 +24,4 @@ class AuditTable(Database):
         Create a document in the database
         """
         r = self.collection.insert_one(audit_event.dict())
-        print(f"Inserted audit event: {r.inserted_id}")
         return r
