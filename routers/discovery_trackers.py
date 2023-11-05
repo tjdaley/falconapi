@@ -66,7 +66,7 @@ def log_audit_event(event: str, doc_id: str, user: User, old_data: BaseModel = N
         )
         audittable.create_event(audit)
     else:
-        LOGGER.info("AUDIT_LOGGING_ENABLED is False, so not logging audit event: %s", event)
+        LOGGER.info("AUDIT_LOGGING_ENABLED is False, so not logging audit event: %s - %s", event, message if message else "(no message provided)")
 
 # Add a tracker
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary='Create a tracker')
@@ -98,6 +98,7 @@ async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_u
 # Get all trackers for a user
 @router.get('/user', status_code=status.HTTP_200_OK, response_model=List[Tracker], summary='Get all trackers for a user')
 async def get_trackers_for_user(username: str = None, user: User = Depends(get_current_active_user)):
+    LOGGER.info("get_trackers_for_user: username=%s by user=%s", username, user.username)
     if username is None:
         username = user.username
     if user.admin or user.username == username:
