@@ -195,6 +195,34 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
         return props
     return extendedprops[doc_id]
 
+# Delete a table from a document given the table_id and the document_id
+@router.delete('/tables', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a table from a document')
+async def delete_document_table(doc_id: str, table_id: str, user: User = Depends(get_current_active_user)):
+    if doc_id not in extendedprops:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
+    if documents[doc_id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    # Delete the json-formatted table
+    if 'dict_tables' not in extendedprops[doc_id]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document does not have tables: {doc_id}")
+    
+    xprops = extendedprops[doc_id].copy()
+    tables = xprops['dict_tables'].get('tables', [])
+    new_tables = [table for table in tables if table['table_id'] != table_id]
+    xprops['dict_tables']['tables'] = new_tables
+
+    # Delete the csv-formatted table
+    if 'csv_tables' not in extendedprops[doc_id]:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document does not have tables: {doc_id}")
+    if table_id not in extendedprops[doc_id]['csv_tables']:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Dict Table not found: {table_id}")
+    del xprops.get('csv_tables', {})[table_id]
+    # synchornizes the datastore with the extendedprops dict
+    extendedprops[doc_id] = xprops
+
+    return {'message': "Table deleted", 'id': table_id}
+
 # Update a document
 @router.put('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update a document')
 async def update_document(doc: Document, user: User = Depends(get_current_active_user)):

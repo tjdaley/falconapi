@@ -94,7 +94,10 @@ class ExtendedPropertiesTable(Database):
         """
         Update extended properties
         """
-        d = extendedprops.dict()
+        if isinstance(extendedprops, ExtendedPropertiesDict):
+            d = extendedprops.dict()
+        else:
+            d = extendedprops
         id = d.get('id')
         return self.collection.replace_one({'id': id}, d)
 

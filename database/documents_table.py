@@ -82,6 +82,7 @@ class DocumentsDict(dict):
         """
         return self.documents.get_category_subcategory_pairs_for_tracker(tracker)
     
+    
 class DocumentsTable(Database):
     """
     Class for interacting with the documents table
@@ -123,50 +124,12 @@ class DocumentsTable(Database):
         """
         fields = list(document.__fields_set__)
         fields.remove('id')
-        print("*" * 80)
-        print(document.__fields_set__)
-        print("*" * 80)
-        print(fields)
         values = document.dict()
         set_clause = {}
         for field in fields:
             set_clause[field] = values[field]
         return self.collection.update_one({'id': document.id}, {'$set': set_clause})
-        """
-        if document.added_username:
-            return self.collection.update_one(
-                {'id': document.id},
-                {'$set': {
-                    'path': document.path,
-                    'filename': document.filename,
-                    'type': document.type,
-                    'title': document.title,
-                    'create_date': document.create_date,
-                    'document_date': document.document_date,
-                    'beginning_bates': document.beginning_bates,
-                    'ending_bates': document.ending_bates,
-                    'page_count': document.page_count,
-                    'added_username': document.added_username
-                    }
-                }
-            )
 
-        return self.collection.update_one(
-            {'id': document.id},
-            {'$set': {
-                'path': document.path,
-                'filename': document.filename,
-                'type': document.type,
-                'title': document.title,
-                'create_date': document.create_date,
-                'document_date': document.document_date,
-                'beginning_bates': document.beginning_bates,
-                'ending_bates': document.ending_bates,
-                'page_count': document.page_count,
-                }
-            }
-        )
-        """
     def delete_document(self, id: str) -> dict:
         """
         Delete a document from the database
