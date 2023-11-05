@@ -87,11 +87,9 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
 async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_user)):
     tracker = trackers.get(tracker_id)
     if not tracker:
-        LOGGER.info("Tracker %s not found", tracker_id)
         log_audit_event('get_tracker', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
     if user.username not in tracker.auth_usernames and not user.admin:
-        LOGGER.info("User %s not authorized to get tracker %s", user.username, tracker_id)
         log_audit_event('get_tracker', tracker_id, user, success=False, message=f"User {user.username} not authorized to get tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     log_audit_event('get_tracker', tracker_id, user)
@@ -107,7 +105,6 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
         return trackers.get_for_username(username)
 
     log_audit_event(f'get_trackers_for_user::{username}', '', user, success=False, message=f"User {user.username} not authorized to get trackers for user {username}")
-    LOGGER.warning("User %s not authorized to get trackers for user %s", user.username, username)
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
 # Update a tracker
