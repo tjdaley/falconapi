@@ -41,5 +41,7 @@ def running_as_service() -> bool:
 	"""
 	Return True if we are running as a service
 	"""
-	return psutil.Process(os.getpid()).ppid() == 1
+	parent_pid = os.getppid()
+	print("Parent PID:", parent_pid)
+	return parent_pid == 1
 	# return 'SYSTEMD_INVOCATION' in os.environ
