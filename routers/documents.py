@@ -180,6 +180,7 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
     if doc_id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
+        print("Username mismatch:", documents[doc_id].added_username, "vs.", user.username)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     # Some documents don't have tables
     if 'dict_tables' not in extendedprops[doc_id]:
