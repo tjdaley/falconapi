@@ -100,6 +100,7 @@ async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_u
 async def get_trackers_for_user(username: str = None, user: User = Depends(get_current_active_user)):
     message = f"get_trackers_for_user: username={username} by user={user.username}. Requesting user is admin={user.admin}"
     LOGGER.info(message)
+    log_audit_event(f'get_trackers_for_user::{username}', '', user, success=False, message=message)
     if username is None:
         username = user.username
     if user.admin or user.username == username:
