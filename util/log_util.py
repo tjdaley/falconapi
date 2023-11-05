@@ -3,12 +3,13 @@ log_util.py - Logging utilities
 """
 import logging
 import os
+import psutil
 
 def get_logger(name: str) -> logging.Logger:
 	"""
 	Return a logger object
 	"""
-	if 'SYSTEMD_INVOCATION' in os.environ:
+	if running_as_service():
 		logging.basicConfig(format='%(levelname)s - %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 		level = convert_level(os.environ.get('LOG_LEVEL', 'INFO').upper())
 	else:
@@ -35,3 +36,10 @@ def convert_level(log_level: str) -> int:
 		return logging.CRITICAL
 	else:
 		return logging.INFO
+
+def running_as_service() -> bool:
+	"""
+	Return True if we are running as a service
+	"""
+	return psutil.Process(os.getpid()).ppid() == 1
+	# return 'SYSTEMD_INVOCATION' in os.environ
