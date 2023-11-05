@@ -38,9 +38,12 @@ def convert_level(log_level: str) -> int:
 
 def running_as_service() -> bool:
 	"""
-	Return True if we are running as a service
+	Return True if we are running as a service.
+
+	This implementation requires an environment variable named
+	SYSTEMD_INVOCATION to be set by the systemd service file.
+
+	In the service file, set:
+	Environment=SYSTEMD_INVOCATION=true
 	"""
-	parent_pid = os.getppid()
-	print("Parent PID:", parent_pid)
-	return parent_pid == 1
-	# return 'SYSTEMD_INVOCATION' in os.environ
+	return 'SYSTEMD_INVOCATION' in os.environ
