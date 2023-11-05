@@ -98,7 +98,8 @@ async def get_tracker(tracker_id: str, user: User = Depends(get_current_active_u
 # Get all trackers for a user
 @router.get('/user', status_code=status.HTTP_200_OK, response_model=List[Tracker], summary='Get all trackers for a user')
 async def get_trackers_for_user(username: str = None, user: User = Depends(get_current_active_user)):
-    LOGGER.info("get_trackers_for_user: username=%s by user=%s", username, user.username)
+    message = f"get_trackers_for_user: username={username} by user={user.username}"
+    LOGGER.info(message)
     if username is None:
         username = user.username
     if user.admin or user.username == username:
@@ -106,7 +107,7 @@ async def get_trackers_for_user(username: str = None, user: User = Depends(get_c
         return trackers.get_for_username(username)
 
     log_audit_event(f'get_trackers_for_user::{username}', '', user, success=False, message=f"User {user.username} not authorized to get trackers for user {username}")
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Unauthorized - user {user.username} not authorized to get trackers for user {username}")
 
 # Update a tracker
 @router.put('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update a tracker')
