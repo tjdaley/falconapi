@@ -57,7 +57,7 @@ class TxChildSupportCalculator():
 
 		monthly_wage_income = self.calculate_monthly_income(request.wage_income, request.wage_income_frequency)
 		monthly_nonwage_income = self.calculate_monthly_income(request.nonwage_income, request.nonwage_income_frequency)
-		social_security_tax = min(monthly_wage_income*12, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE
+		social_security_tax = round(min(monthly_wage_income*12, SOCIAL_SECURITY_CAP) / 12.0, 2) * SOCIAL_SECURITY_TAX_RATE
 		medicare_tax = monthly_wage_income * MEDICARE_TAX_RATE
 		taxable_income = monthly_nonwage_income + monthly_wage_income - social_security_tax - medicare_tax - FEDERAL_STANDARD_DEDUCTION
 		federal_income_tax = self.calculate_federal_income_tax(taxable_income)
