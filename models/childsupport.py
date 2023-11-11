@@ -88,3 +88,9 @@ class ChildSupportResponse(BaseModel):
 	capped_flag: bool = Field(..., example=False)
 	tax_table_version: str = Field(..., example="2023.1")
 	child_support_factor: float = Field(..., example=0.25)
+	monthly_wage_income: float = Field(..., example=1000.00)
+	monthly_nonwage_income: float = Field(..., example=0.00)
+	social_security_tax: float = Field(..., example=0.00)
+	medicare_tax: float = Field(..., example=0.00)
+	federal_income_tax: float = Field(..., example=0.00)
+	

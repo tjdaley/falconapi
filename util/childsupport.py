@@ -51,6 +51,10 @@ class TxChildSupportCalculator():
 		"""
 		Calculate child support
 		"""
+		if request.mininum_wage:
+			request.wage_income = FEDERAL_MINIMUM_WAGE * 40.00
+			request.wage_income_frequency = 'weekly'
+
 		monthly_wage_income = self.calculate_monthly_income(request.wage_income, request.wage_income_frequency)
 		monthly_nonwage_income = self.calculate_monthly_income(request.nonwage_income, request.nonwage_income_frequency)
 		social_security_tax = min(monthly_wage_income*12, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE
@@ -65,11 +69,16 @@ class TxChildSupportCalculator():
 		monthly_child_support = net_monthly_resources * factor
 		capped_flag = net_monthly_resources == TEXAS_NET_RESOURCES_LIMIT
 		return {
-			'net_monthly_resources': net_monthly_resources,
-			'child_support': monthly_child_support,
+			'net_monthly_resources': round(net_monthly_resources, 2),
+			'child_support': round(monthly_child_support, 0),
 			'capped_flag': capped_flag,
 			'tax_table_version': f'{TAX_TABLE_YEAR}.1',
 			'child_support_factor': factor,
+			'monthly_wage_income': monthly_wage_income,
+			'monthly_nonwage_income': monthly_nonwage_income,
+			'social_security_tax': round(social_security_tax, 2),
+			'medicare_tax': round(medicare_tax, 2),
+			'federal_income_tax': round(federal_income_tax, 2),
 		}
 
 	def child_support_factor(self, number_of_children: int, number_of_other_children: int) -> float:
