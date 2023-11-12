@@ -58,3 +58,24 @@ app.include_router(childsupport, prefix=API_VERSION_PREFIX)
 )
 async def root():
     return {"message": COPYRIGHT}
+
+@app.get(
+    '/privacy',
+    status_code=status.HTTP_200_OK,
+    tags=['API'],
+    response_model=dict,
+    summary='Get the privacy policy')
+async def privacy():
+    # read in our privacy policy from privacy.txt and privacy.md
+    try:
+        with open('privacy.txt', 'r') as f:
+            privacy_txt = f.read()
+    except:
+        privacy_txt = None
+
+    try:
+        with open('privacy.md', 'r') as f:
+            privacy_md = f.read()
+    except:
+        privacy_md = None
+    return {"message": "Privacy Policy", "text": privacy_txt, "markdown": privacy_md}
