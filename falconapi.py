@@ -21,12 +21,23 @@ api_version = APIVersion(1, 0)
 API_VERSION = api_version.to_str()
 API_VERSION_PREFIX = f'/api/{API_VERSION}'
 COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2023.11.05)"
+SERVERS = [
+    {
+        "url": "http://localhost:8000",
+        "description": "Local Development Server",
+    },
+    {
+        "url": "https://api.jdbot.us",
+        "description": "Production Server",
+    },
+]
 
 app = FastAPI(
     title="Falcon API",
     description=COPYRIGHT,
     version=API_VERSION,
     prefix=API_VERSION_PREFIX,
+    servers=SERVERS,
 )
 
 app.add_middleware(
