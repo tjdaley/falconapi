@@ -5,7 +5,7 @@ childsupport.py - Models for a child support calcualtion request and response
 from pydantic import BaseModel, Field, validator
 
 
-INCOME_FREQUENCY = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'annually']
+INCOME_FREQUENCY = ['weekly', 'biweekly', 'semimonthly', 'monthly', 'annually', 'yearly']
 INCOME_FREQUENCY_CHOICES = ', '.join(INCOME_FREQUENCY[:-1]) + ', or ' + INCOME_FREQUENCY[-1]
 
 
@@ -93,4 +93,3 @@ class ChildSupportResponse(BaseModel):
 	social_security_tax: float = Field(..., example=0.00)
 	medicare_tax: float = Field(..., example=0.00)
 	federal_income_tax: float = Field(..., example=0.00)
-
