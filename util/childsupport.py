@@ -1,7 +1,11 @@
 """
 childsupport.py - Calculate child support
 """
+from collections import namedtuple
 from models.childsupport import ChildSupportRequest
+
+# Named tuple for holding tax bracket information
+TaxBracket = namedtuple('TaxBracket', ['lower_limit', 'upper_limit', 'tax_rate', 'tax_on_lower_brackets'])
 
 # Updated for 2023 Tax Tables
 TAX_TABLE_YEAR = 2023
@@ -19,17 +23,17 @@ FEDERAL_STANDARD_DEDUCTION = 13850.00
 # [2] = tax on lower brackets
 #
 # So for a taxable income of $100,000:
-#    Base tax = $16,290.00
-#    Additional Tax = $100,000 - $95,375 * .24
+#    Base tax = $5,147.00
+#    Additional Tax = ($100,000 - $95,375) * .24
 #    Total Tax = Base Tax + Additional Tax
 FEDERAL_INCOME_TAX_TABLE = [
-	(11000, 0.10, 0.00),
-	(44725, 0.12, 1100),
-	(95375, 0.22, 5147.00),
-	(182100, 0.24, 16290.00),
-	(231250, 0.32, 37104.00),
-	(578125, 0.35, 52832.00),
-	(99999999999, 0.37, 174238.25),
+	TaxBracket(0.00, 11000.00, 0.10, 0.00),
+	TaxBracket(11001.00, 44725.00, 0.12, 1100),
+	TaxBracket(44726.00, 95375.00, 0.22, 5147.00),
+	TaxBracket(95376.00, 182100.00, 0.24, 16290.00),
+	TaxBracket(182101.00, 231250.00, 0.32, 37104.00),
+	TaxBracket(231251.00, 578125.00, 0.35, 52832.00),
+	TaxBracket(578126.00, 99999999999.00, 0.37, 174238.25),
 ]
 
 TEXAS_CHILD_FACTORS = [
@@ -55,30 +59,31 @@ class TxChildSupportCalculator():
 			request.wage_income = FEDERAL_MINIMUM_WAGE * 40.00
 			request.wage_income_frequency = 'weekly'
 
-		monthly_wage_income = self.calculate_monthly_income(request.wage_income, request.wage_income_frequency)
-		monthly_nonwage_income = self.calculate_monthly_income(request.nonwage_income, request.nonwage_income_frequency)
-		social_security_tax = round(min(monthly_wage_income*12, SOCIAL_SECURITY_CAP) / 12.0, 2) * SOCIAL_SECURITY_TAX_RATE
-		medicare_tax = monthly_wage_income * MEDICARE_TAX_RATE
-		taxable_income = monthly_nonwage_income + monthly_wage_income - social_security_tax - medicare_tax - FEDERAL_STANDARD_DEDUCTION
-		federal_income_tax = self.calculate_federal_income_tax(taxable_income)
-		net_monthly_resources = min(
-			monthly_wage_income + monthly_nonwage_income - social_security_tax - medicare_tax - federal_income_tax - request.union_dues - request.health_insurance,
-			TEXAS_NET_RESOURCES_LIMIT
+		annual_wage_income = self.calculate_annual_income(request.wage_income, request.wage_income_frequency)
+		annual_nonwage_income = self.calculate_annual_income(request.nonwage_income, request.nonwage_income_frequency)
+		annual_social_security_tax = min(annual_wage_income, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE
+		annual_medicare_tax = annual_wage_income * MEDICARE_TAX_RATE
+		annual_taxable_income = annual_nonwage_income + annual_wage_income - FEDERAL_STANDARD_DEDUCTION
+		federal_income_tax = self.calculate_federal_income_tax(annual_taxable_income)
+		annual_net_resources = min(
+			annual_wage_income + annual_nonwage_income - annual_social_security_tax - annual_medicare_tax - federal_income_tax - request.union_dues * 12 - request.health_insurance * 12,
+			TEXAS_NET_RESOURCES_LIMIT * 12
 		)
 		factor = self.child_support_factor(request.number_of_children, request.other_children)
-		monthly_child_support = net_monthly_resources * factor
-		capped_flag = net_monthly_resources == TEXAS_NET_RESOURCES_LIMIT
+		annual_child_support = annual_net_resources * factor
+		capped_flag = (annual_net_resources * 12) == TEXAS_NET_RESOURCES_LIMIT
+
 		return {
-			'net_monthly_resources': round(net_monthly_resources, 2),
-			'child_support': round(monthly_child_support, 0),
+			'net_monthly_resources': round(annual_net_resources / 12.0, 2),
+			'child_support': round(annual_child_support / 12.0, 2),
 			'capped_flag': capped_flag,
 			'tax_table_version': f'{TAX_TABLE_YEAR}.1',
 			'child_support_factor': factor,
-			'monthly_wage_income': monthly_wage_income,
-			'monthly_nonwage_income': monthly_nonwage_income,
-			'social_security_tax': round(social_security_tax, 2),
-			'medicare_tax': round(medicare_tax, 2),
-			'federal_income_tax': round(federal_income_tax, 2),
+			'monthly_wage_income': annual_wage_income / 12.0,
+			'monthly_nonwage_income': round(annual_nonwage_income / 12.0, 2),
+			'social_security_tax': round(annual_social_security_tax / 12.0, 2),
+			'medicare_tax': round(annual_medicare_tax / 12.0, 2),
+			'federal_income_tax': round(federal_income_tax / 12.0, 2),
 		}
 
 	def child_support_factor(self, number_of_children: int, number_of_other_children: int) -> float:
@@ -99,28 +104,26 @@ class TxChildSupportCalculator():
 		"""
 		tax = 0.0
 		for idx, bracket in enumerate(FEDERAL_INCOME_TAX_TABLE):
-			if taxable_income <= bracket[0]:
-				base_tax = bracket[2]
-				if idx > 0:
-					additional_tax = (taxable_income - FEDERAL_INCOME_TAX_TABLE[idx-1]) * bracket[1]
-				else:
-					additional_tax = 0.0
-				tax = base_tax + additional_tax
-				tax = bracket[2] + (taxable_income - bracket[2]) * bracket[1]
+			if taxable_income >= bracket.lower_limit and taxable_income <= bracket.upper_limit:
+				marginal_income = taxable_income - bracket.lower_limit + 1  # Add 1 so that we're taxing all of the income in the bracket
+				additional_tax = marginal_income * bracket.tax_rate
+				tax = bracket.tax_on_lower_brackets + additional_tax
 				break
 		return round(tax, 2)
 
-	def calculate_monthly_income(self, income: float, frequency: str):
+	def calculate_annual_income(self, income: float, frequency: str):
 		"""
 		Calculate monthly income
 		"""
 		if frequency == 'weekly':
-			return round(income * 52 / 12, 2)
+			return round(income * 52, 2)
 		elif frequency == 'biweekly':
-			return round(income * 26 / 12, 2)
+			return round(income * 26, 2)
 		elif frequency == 'semimonthly':
-			return round(income * 24 / 12, 2)
+			return round(income * 24, 2)
 		elif frequency == 'monthly':
+			return round(income * 12, 2)
+		elif frequency in ['annually', 'yearly']:
 			return round(income, 2)
 		else:
 			raise ValueError(f"Invalid income frequency: {frequency}")
