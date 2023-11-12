@@ -23,10 +23,6 @@ API_VERSION_PREFIX = f'/api/{API_VERSION}'
 COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2023.11.05)"
 SERVERS = [
     {
-        "url": "http://localhost:8000",
-        "description": "Local Development Server",
-    },
-    {
         "url": "https://api.jdbot.us",
         "description": "Production Server",
     },

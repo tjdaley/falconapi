@@ -119,7 +119,7 @@ async def get_document_classify_sync(doc_id: str, background_tasks: BackgroundTa
     }
 
 # Get document classification - Async
-@router.get('/classify', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Queue document classification and return')
+@router.get('/classify', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Queue document classification and return', description='Queue document classification and return a task_id that can be used to check the status of the classification')
 async def get_document_classify(doc_id: str, background_tasks: BackgroundTasks, user: User = Depends(get_current_active_user)):
     """
     Queue a document for classification. Returns a task_id that can be used to check the status of the classification.
