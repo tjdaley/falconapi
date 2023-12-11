@@ -22,7 +22,8 @@ router = APIRouter(
 
 # Retrieve property description and valuation data from ATTOM Data Solutions
 @router.get('/property', status_code=status.HTTP_200_OK, response_model=RealPropertyInfoRequest, summary='Get Property Details')
-async def get_property_details(info_request: RealPropertyInfoRequest):
+#async def get_property_details(info_request: RealPropertyInfoRequest):
+async def get_property_details(address: str, city: str, state: str, zip_code: str):
     """
     Retrieve property description and valuation data from ATTOM Data Solutions
 
@@ -35,4 +36,4 @@ async def get_property_details(info_request: RealPropertyInfoRequest):
     Returns:
         dict: Property details
     """
-    return Utilities.get_property_details(info_request.address, info_request.city, info_request.state, info_request.zip_code)
+    return Utilities.get_property_details(address, city, state, zip_code)
