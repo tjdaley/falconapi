@@ -3,6 +3,7 @@ realproperty.py - Models for a real property information request and response
 """
 
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class RealPropertyInfoRequest(BaseModel):
@@ -24,7 +25,7 @@ class RealPropertyInfoResponse(BaseModel):
 	tax_year: str = Field(..., example="2022")
 	tax_amount: float = Field(..., example=7016.58)
 	owners: str = Field(..., example="THOMAS J DALEY, AVA P DALEY")
-	approximate_value_midpoint: int = Field(..., example=515908, default=0)
-	approximate_value_high: int = Field(..., example=521067, default=0)
-	approximate_value_low: int = Field(..., example=510748, default=0)
-	equity_amount: int = Field(..., example=445790, default=0)
+	approximate_value_midpoint: Optional[int] = Field(..., example=515908)
+	approximate_value_high: Optional[int] = Field(..., example=521067)
+	approximate_value_low: Optional[int] = Field(..., example=510748)
+	equity_amount: Optional[int] = Field(..., example=445790)
