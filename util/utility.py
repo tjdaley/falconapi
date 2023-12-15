@@ -54,8 +54,6 @@ class Utilities():
 
         endpoint = '/valuation/homeequity'
         equity_data = query_attomdata(params, endpoint)
-        if not equity_data:
-            return property_description
         valuation_data = parse_home_equity_data(equity_data)
         result = {**property_description, **valuation_data}
         return result
