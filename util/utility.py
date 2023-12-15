@@ -72,7 +72,7 @@ def parse_basic_property_data(property_data: dict) -> dict:
     """
     property = property_data['property'][0]
     last_sale_data = property.get('sale', {}).get('saleAmountData', {})
-    last_sale_date = last_sale_data.get('saleRecDate', None)
+    last_sale_date = last_sale_data.get('saleRecDate', 'n/a')
     last_sale_amount = last_sale_data.get('saleAmt', 0)
 
     assessment = property.get('assessment', {})
@@ -118,7 +118,12 @@ def parse_home_equity_data(equity_data: dict) -> dict:
     if property is None:
         print("No property data found")
         print(equity_data)
-        return {}
+        return {
+            'approximate_value_midpoint': 0,
+            'approximate_value_high': 0,
+            'approximate_value_low': 0,
+            'equity_amount': 0,
+        }
     property = property[0]
     avm_data = property.get('avm', {})
     avm_amount = avm_data.get('amount', {})
