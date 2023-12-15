@@ -174,6 +174,10 @@ def query_attomdata(parameters: dict, endpoint: str) -> dict:
         if response.status_code == 200:
             # Parse the JSON response
             property_data = response.json()
+        elif response.status_code == 400:
+            print("Bad request")
+            print("URL:", response.url)
+            print("Response:", response.json())
         else:
             print(f"Request failed with status code {response.status_code}")
     except requests.exceptions.RequestException as e:
