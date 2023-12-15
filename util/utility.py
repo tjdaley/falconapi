@@ -112,7 +112,12 @@ def parse_home_equity_data(equity_data: dict) -> dict:
     Returns:
         dict: Home equity data
     """
-    property = equity_data['property'][0]
+    property = equity_data.get('property')
+    if property is None:
+        print("No property data found")
+        print(equity_data)
+        return {}
+    property = property[0]
     avm_data = property.get('avm', {})
     avm_amount = avm_data.get('amount', {})
     avm_value = avm_amount.get('value', 0)
