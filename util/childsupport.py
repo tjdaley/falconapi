@@ -65,13 +65,15 @@ class TxChildSupportCalculator():
 
 		if request.self_employed:
 			income_adjustment = SELF_EMPLOYMENT_TAXABLE_INCOME
+			tax_rate_adjustment = 2.0
 		else:
 			income_adjustment = 1.0
+			tax_rate_adjustment = 1.0
 
 		annual_wage_income = self.calculate_annual_income(request.wage_income, request.wage_income_frequency)
 		annual_nonwage_income = self.calculate_annual_income(request.nonwage_income, request.nonwage_income_frequency)
-		annual_social_security_tax = min(annual_wage_income * income_adjustment, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE
-		annual_medicare_tax = annual_wage_income * income_adjustment * MEDICARE_TAX_RATE
+		annual_social_security_tax = min(annual_wage_income * income_adjustment, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE * tax_rate_adjustment
+		annual_medicare_tax = annual_wage_income * income_adjustment * MEDICARE_TAX_RATE * tax_rate_adjustment
 		annual_taxable_income = annual_nonwage_income + annual_wage_income - FEDERAL_STANDARD_DEDUCTION
 		federal_income_tax = self.calculate_federal_income_tax(annual_taxable_income)
 		annual_net_resources = min(
