@@ -32,6 +32,8 @@ class Document(BaseModel):
     updated_username: Optional[str]
     updated_date: datetime = Field(default_factory=datetime.utcnow)
     version: Optional[str] = str(uuid4())
+    classification: Optional[str]
+    sub_classification: Optional[dict]
 
     class Config:
         orm_mode = True
@@ -48,6 +50,11 @@ class Document(BaseModel):
                 "ending_bates": "TJD000009",
                 "page_count": "9",
                 "client_reference": "DALTHO01A",
+                "classification": "Bank Document",
+                "sub_classification": {
+                    "category": "Banking",
+                    "subcategory": "Checking Account"
+                }
             }
         }
 
