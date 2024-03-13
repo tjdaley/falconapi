@@ -248,6 +248,10 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
     updated_doc.page_count = doc.page_count
     updated_doc.title = doc.title
     updated_doc.type = doc.type
+    if doc.classification:
+        updated_doc.classification = doc.classification
+    if doc.sub_classification:
+        updated_doc.sub_classification = doc.sub_classification
     documents[doc.id] = updated_doc
 
     return {'message': "Document updated", 'id': doc.id}
