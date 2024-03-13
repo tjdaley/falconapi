@@ -16,6 +16,10 @@ MEDICARE_TAX_RATE = 0.0145
 TEXAS_NET_RESOURCES_LIMIT = 9200.00
 FEDERAL_STANDARD_DEDUCTION = 13850.00
 
+# Percentage of self-employed person's employment income that is
+# subject to payroll taxes.
+SELF_EMPLOYMENT_TAXABLE_INCOME = 1.0 - (SOCIAL_SECURITY_TAX_RATE + MEDICARE_TAX_RATE)
+
 # Updated for 2023 Tax Tables
 # https://www.nerdwallet.com/article/taxes/federal-income-tax-brackets
 # [0] = upper limit of bracket
@@ -59,10 +63,17 @@ class TxChildSupportCalculator():
 			request.wage_income = FEDERAL_MINIMUM_WAGE * 40.00
 			request.wage_income_frequency = 'weekly'
 
+		if request.self_employed:
+			income_adjustment = SELF_EMPLOYMENT_TAXABLE_INCOME
+			tax_rate_adjustment = 2.0
+		else:
+			income_adjustment = 1.0
+			tax_rate_adjustment = 1.0
+
 		annual_wage_income = self.calculate_annual_income(request.wage_income, request.wage_income_frequency)
 		annual_nonwage_income = self.calculate_annual_income(request.nonwage_income, request.nonwage_income_frequency)
-		annual_social_security_tax = min(annual_wage_income, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE
-		annual_medicare_tax = annual_wage_income * MEDICARE_TAX_RATE
+		annual_social_security_tax = min(annual_wage_income * income_adjustment, SOCIAL_SECURITY_CAP) * SOCIAL_SECURITY_TAX_RATE * tax_rate_adjustment
+		annual_medicare_tax = annual_wage_income * income_adjustment * MEDICARE_TAX_RATE * tax_rate_adjustment
 		annual_taxable_income = annual_nonwage_income + annual_wage_income - FEDERAL_STANDARD_DEDUCTION
 		federal_income_tax = self.calculate_federal_income_tax(annual_taxable_income)
 		annual_net_resources = min(
@@ -77,7 +88,7 @@ class TxChildSupportCalculator():
 			'net_monthly_resources': round(annual_net_resources / 12.0, 2),
 			'child_support': round(annual_child_support / 12.0, 2),
 			'capped_flag': capped_flag,
-			'tax_table_version': f'{TAX_TABLE_YEAR}.1',
+			'tax_table_version': f'{TAX_TABLE_YEAR}.2',
 			'child_support_factor': factor,
 			'monthly_wage_income': annual_wage_income / 12.0,
 			'monthly_nonwage_income': round(annual_nonwage_income / 12.0, 2),
