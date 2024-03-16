@@ -69,5 +69,5 @@ async def queue_request(
     if request.task == 'stop':
         LOGGER.info(f"Ignoring {request.task} task")
         return {"message": f"{request.task} task ignored, fucko", "id": request.request_id}
-    work_queue.enqueue_work(request)
+    work_queue.enqueue_work(request.json)
     return {"message": f"{request.task} task queued", "id": request.request_id}
