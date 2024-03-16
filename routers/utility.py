@@ -50,7 +50,7 @@ async def get_property_details(address: str, city: str, state: str, zip_code: st
     return Utilities.get_property_details(address, city, state, zip_code)
 
 # Queue a request for processing
-@router.post('/queue', status_code=status.HTTP_201_CREATED, summary='Queue a Request')
+@router.post('/enqueue', status_code=status.HTTP_201_CREATED, summary='Queue a Request')
 async def queue_request(request: QueueRequest, background_tasks: BackgroundTasks):
     """
     Queue a request for processing
