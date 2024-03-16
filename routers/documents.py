@@ -62,7 +62,7 @@ async def add_document_props(props: ExtendedDocumentProperties, user: User = Dep
     # If the document already has extended properties, we need to update them.
     verb = 'added'
     if document_id in extendedprops:
-        existing_props = extendedprops[document_id]
+        existing_props = extendedprops[document_id] or {}
         for key, _ in props:
             existing_props[key] = props.__dict__.get(key)
         props = ExtendedDocumentProperties(**existing_props)
@@ -74,7 +74,7 @@ async def add_document_props(props: ExtendedDocumentProperties, user: User = Dep
 
 # Get a document by ID or path
 @router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID or path')
-async def get_document(doc_id: str = None, path: str = None, user: User = Depends(get_current_active_user)):
+async def get_document(doc_id: str = '', path: str = '', user: User = Depends(get_current_active_user)):
     if doc_id:
         doc = documents.get(doc_id)
         if not doc:
@@ -109,7 +109,7 @@ async def get_document_classify_sync(doc_id: str, background_tasks: BackgroundTa
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    classification = _classify(doc_id, None)
+    classification = _classify(doc_id, '')
     return {
         'task_id': None,
         'document_id': doc_id,
@@ -184,15 +184,16 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
         LOGGER.error("Username mismatch:", documents[doc_id].added_username, "vs.", user.username)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     # Some documents don't have tables
-    if 'dict_tables' not in extendedprops[doc_id]:
+    xprops = extendedprops.get(doc_id) or {}
+    if 'dict_tables' not in xprops:
         tables = {"tables": {}}
-        props = extendedprops[doc_id].copy()
+        props = xprops.copy()
         props['dict_tables'] = tables
         return props
     # Some older documents were saved with a list of tables, not a dict of tables
-    if not isinstance(extendedprops[doc_id]['dict_tables'], dict):
-        tables = {"tables": {e['table_id']: e for e in extendedprops[doc_id]['dict_tables']}}
-        props = extendedprops[doc_id].copy()
+    if not isinstance(xprops['dict_tables'], dict):
+        tables = {"tables": {e['table_id']: e for e in xprops['dict_tables']}}
+        props = xprops.copy()
         props['dict_tables'] = tables
         return props
     return extendedprops[doc_id]
@@ -206,18 +207,19 @@ async def delete_document_table(doc_id: str, table_id: str, user: User = Depends
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     
     # Delete the json-formatted table
-    if 'dict_tables' not in extendedprops[doc_id]:
+    xprops = extendedprops.get(doc_id) or {}
+    if 'dict_tables' not in xprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document does not have tables: {doc_id}")
     
-    xprops = extendedprops[doc_id].copy()
+    xprops = xprops.copy()
     tables = xprops['dict_tables'].get('tables', [])
     new_tables = [table for table in tables if table['table_id'] != table_id]
     xprops['dict_tables']['tables'] = new_tables
 
     # Delete the csv-formatted table
-    if 'csv_tables' not in extendedprops[doc_id]:
+    if 'csv_tables' not in xprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document does not have tables: {doc_id}")
-    if table_id not in extendedprops[doc_id]['csv_tables']:
+    if table_id not in xprops['csv_tables']:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Dict Table not found: {table_id}")
     del xprops.get('csv_tables', {})[table_id]
     # synchornizes the datastore with the extendedprops dict
@@ -270,7 +272,7 @@ async def update_document_props(props: ExtendedDocumentProperties, user: User = 
 # TODO: Do not delete a document if it is in other trackers - Switch.
 # TODO: Delete references to the document from trackers
 @router.delete('/', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a document')
-async def delete_document(doc_id: str, cascade: bool = 'true', user: User = Depends(get_current_active_user)):
+async def delete_document(doc_id: str, cascade: bool = True, user: User = Depends(get_current_active_user)):
     should_cascade = cascade == 'true'
     if not doc_id in documents:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
