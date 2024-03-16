@@ -10,7 +10,9 @@ from routers.api_version import APIVersion
 from util.utility import Utilities
 from models.realproperty import RealPropertyInfoRequest, RealPropertyInfoResponse
 from models.queue_request import QueueRequest
+from models.user import User
 from distributed_work_queue.workqueue import DistributedWorkQueue
+from auth.handler import get_current_active_user
 
 load_dotenv()
 API_VERSION = APIVersion(1, 0).to_str()
@@ -49,9 +51,14 @@ async def get_property_details(address: str, city: str, state: str, zip_code: st
     """
     return Utilities.get_property_details(address, city, state, zip_code)
 
+
 # Queue a request for processing
 @router.post('/enqueue', status_code=status.HTTP_201_CREATED, summary='Queue a Request')
-async def queue_request(request: QueueRequest, background_tasks: BackgroundTasks):
+async def queue_request(
+    request: QueueRequest,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(get_current_active_user),
+):
     """
     Queue a request for processing
 
@@ -59,5 +66,8 @@ async def queue_request(request: QueueRequest, background_tasks: BackgroundTasks
         request (QueueRequest): Request to be queued
         background_tasks (BackgroundTasks): Background tasks to be executed
     """
+    if request.task == 'stop':
+        LOGGER.info(f"Ignoring {request.task} task")
+        return {"message": f"{request.task} task ignored, fucko", "id": request.request_id}
     work_queue.enqueue_work(request)
     return {"message": f"{request.task} task queued", "id": request.request_id}
