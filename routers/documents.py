@@ -178,7 +178,29 @@ async def get_document_tables_csv(doc_id: str, user: User = Depends(get_current_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return extendedprops[doc_id]
+    if 'tables' not in (extendedprops[doc_id] or {}):
+        return {"id": doc_id, "csv_tables": {}, "version": (extendedprops[doc_id] or {}).get('version')}
+    csv_tables = make_csv_tables((extendedprops[doc_id] or {}).get('tables', {}))
+    return {"id": doc_id, "csv_tables": csv_tables, "version": (extendedprops[doc_id] or {}).get('version')}
+
+def make_csv_tables(tables: dict):
+    """
+    Convert tables to CSV format
+
+    Args:
+        tables (dict): Tables in JSON format
+
+    Returns:
+        dict: Tables in CSV format
+    """
+    if not tables:
+        return {}
+    csv_tables = {}
+    for table_id, table in tables.items():
+        table_rows = list(table[0].keys())
+        data_rows = [list(row.values()) for row in table]
+        csv_tables[table_id] = {'headers': table_rows, 'data': data_rows}
+    return csv_tables
 
 @router.get('/tables/json', status_code=status.HTTP_200_OK, response_model=DocumentObjTables, summary='Get a document\'s Tables in JSON format')
 async def get_document_tables_json(doc_id: str, user: User = Depends(get_current_active_user)):
