@@ -274,7 +274,10 @@ async def update_document_props(
         existing_props = extendedprops[props.id] or {}
         for key, _ in props:
             if key not in locked_props:
-                existing_props[key] = props.__dict__.get(key)
+                if key == 'tables':
+                    existing_props['tables'] = update_tables(existing_props.get('tables', {}), props.tables or {})
+                else:
+                    existing_props[key] = props.__dict__.get(key)
         props = PutExtendedDocumentProperties(**existing_props)
         verb = "updated"
 
@@ -282,6 +285,27 @@ async def update_document_props(
     extendedprops[props.id] = props
     return {"message": f"Document properties {verb} (put)", "id": props.id}
 
+
+def update_tables(existing_tables: dict, new_tables: dict):
+    """
+    Update a table in the extended properties
+
+    Args:
+        existing_tables (dict): Existing tables
+        new_tables (dict): New tables
+
+    Returns:
+        dict: Updated tables
+    """
+    if not new_tables:
+        return existing_tables
+    if not existing_tables:
+        return new_tables
+
+    for table_id, table in new_tables.items():
+        if isinstance(table, list):
+            existing_tables[table_id] = table
+    return existing_tables
 
 # Delete a document
 # TODO: Do not delete a document if it is in other trackers - Switch.
