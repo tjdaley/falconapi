@@ -266,8 +266,21 @@ async def update_document_props(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {props.id}")
     if documents[props.id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    # If the document already has extended properties, we need to update them.
+    verb = "added"
+    locked_props = ['id', '_id']
+    if props.id in extendedprops:
+        existing_props = extendedprops[props.id] or {}
+        for key, _ in props:
+            if key not in locked_props:
+                existing_props[key] = props.__dict__.get(key)
+        props = PutExtendedDocumentProperties(**existing_props)
+        verb = "updated"
+
+    # Save the extended properties
     extendedprops[props.id] = props
-    return {'message': "Document properties updated", 'id': props.id}
+    return {"message": f"Document properties {verb} (put)", "id": props.id}
 
 
 # Delete a document
