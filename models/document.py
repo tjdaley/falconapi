@@ -58,9 +58,40 @@ class Document(BaseModel):
             }
         }
 
+
+class PutExtendedDocumentProperties(BaseModel):
+    """
+    Extended Properties for a Document
+    These are the properties that are unique to a class of documents or that are used
+    in training the document classification models
+    """
+
+    id: str  # The id of the associated document, which much already be in the documents collection
+    images: Optional[List[str]]
+    text: Optional[str]
+    clean_text: Optional[str]
+    props: Optional[dict]
+    version: Optional[str] = str(uuid4())
+    job_id: Optional[str] = None
+    extraction_type: Optional[str] = None
+    job_status: Optional[str] = None
+    pages: Optional[int]
+    tables: Optional[dict]
+    has_tables: Optional[bool] = False
+
+    @root_validator(pre=True)
+    def exclude_tables(cls, values):
+        if not values.get("has_tables"):
+            values["has_tables"] = values.get("tables") is not None
+        return values
+
+
 class ExtendedDocumentProperties(BaseModel):
     """
     Extended Properties for a Document
+
+    ** F O R   R E T R I E V A L   O N L Y **
+
     These are the properties that are unique to a class of documents or that are used
     in training the document classification models
     """

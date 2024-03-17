@@ -7,7 +7,7 @@ from uuid import uuid4
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
-from models.document import Document, ExtendedDocumentProperties, DocumentCsvTables, DocumentObjTables, DocumentClassificationStatus
+from models.document import Document, PutExtendedDocumentProperties, ExtendedDocumentProperties, DocumentCsvTables, DocumentObjTables, DocumentClassificationStatus
 from models.response import ResponseAndId
 from models.user import User
 from database.documents_table import DocumentsDict
@@ -258,15 +258,19 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
 
     return {'message': "Document updated", 'id': doc.id}
 
+
 # Update extended document properties
 @router.put('/props', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Update extended document properties')
-async def update_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
+async def update_document_props(
+    props: PutExtendedDocumentProperties, user: User = Depends(get_current_active_user)
+):
     if props.id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {props.id}")
     if documents[props.id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     extendedprops[props.id] = props
     return {'message': "Document properties updated", 'id': props.id}
+
 
 # Delete a document
 # TODO: Do not delete a document if it is in other trackers - Switch.
