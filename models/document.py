@@ -156,7 +156,7 @@ class DocumentObjTables(BaseModel):
     Tables for a document
     """
     id: str  # The id of the associated document, which much already be in the extendedprops collection
-    json_tables: Optional[dict] = Field(alias="dict_tables")
+    tables: Optional[dict] = Field(alias="dict_tables")
     version: Optional[str] = str(uuid4())
 
     class Config:
@@ -164,64 +164,13 @@ class DocumentObjTables(BaseModel):
         schema_extra = {
             "example": {
                 "id": "doc-1",
-                "json_tables": {
-                    "tables": [
-                        {
-                            "table_id": "table-1",
-                            "column_count": 3,
-                            "rows": [
-                                [
-                                    {
-                                        "text": "Row 1 Column 1",
-                                    },
-                                    {
-                                        "text": "Row 1 Column 2",
-                                    },
-                                    {
-                                        "text": "Row 1 Column 3"
-                                    }
-                                ],
-                                [
-                                    {
-                                        "text": "Row 2 Column 1",
-                                    },
-                                    {
-                                        "text": "Row 2 Column 2",
-                                    },
-                                    {
-                                        "text": "Row 2 Column 3"
-                                    }
-                                ]
-                            ]
-                        },
-                        {
-                            "table_id": "table-2",
-                            "column_count": 2,
-                            "rows": [
-                                [
-                                    {
-                                        "text": "Row 1 Column 1",
-                                    },
-                                    {
-                                        "text": "Row 1 Column 2",
-                                    }
-                                ],
-                                [
-                                    {
-                                        "text": "Row 2 Column 1",
-                                    },
-                                    {
-                                        "text": "Row 2 Column 2",
-                                    }
-                                ]
-                            ]
-                        }
-                    ]
+                "tables": {
+                    "transactions": [{'date': '2020-01-01', 'description': 'Deposit', 'amount': 1000.00},],
+                    "summary": [{'total_deposits': 1000.00, 'total_withdrawals': 0.00, 'ending_balance': 1000.00}]
                 },
                 "version": "dkf9kfk9jk4kf8glk"
             }
         }
-
 
 class CategorySubcategoryResponse(BaseModel):
     """

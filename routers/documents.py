@@ -183,20 +183,14 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
     if documents[doc_id].added_username != user.username and not user.admin:
         LOGGER.error("Username mismatch:", documents[doc_id].added_username, "vs.", user.username)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    # Some documents don't have tables
     xprops = extendedprops.get(doc_id) or {}
-    if 'dict_tables' not in xprops:
-        tables = {"tables": {}}
-        props = xprops.copy()
-        props['dict_tables'] = tables
-        return props
-    # Some older documents were saved with a list of tables, not a dict of tables
-    if not isinstance(xprops['dict_tables'], dict):
-        tables = {"tables": {e['table_id']: e for e in xprops['dict_tables']}}
-        props = xprops.copy()
-        props['dict_tables'] = tables
-        return props
-    return extendedprops[doc_id]
+    return {'id': doc_id, 'tables': xprops.get('tables', {}) or {}, 'version': xprops.get('version', '*unversioned*')}
+    #if 'tables' not in xprops:
+    #    tables = {"tables": {}}
+    #    props = xprops.copy()
+    #    props['tables'] = tables
+    #    return props
+    #return extendedprops[doc_id]
 
 # Delete a table from a document given the table_id and the document_id
 @router.delete('/tables', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a table from a document')
