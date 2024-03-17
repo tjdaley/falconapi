@@ -155,7 +155,7 @@ class DocumentObjTables(BaseModel):
     Tables for a document
     """
     id: str  # The id of the associated document, which much already be in the extendedprops collection
-    tables: Optional[dict] = Field(alias="dict_tables")
+    tables: Optional[dict] = Field(alias="tables")
     version: Optional[str] = str(uuid4())
 
     class Config:
