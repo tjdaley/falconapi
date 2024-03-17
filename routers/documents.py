@@ -268,22 +268,22 @@ async def update_document_props(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
     # If the document already has extended properties, we need to update them.
-    verb = "added"
-    locked_props = ['id', '_id']
-    if props.id in extendedprops:
-        existing_props = extendedprops[props.id] or {}
-        for key, _ in props:
-            if key not in locked_props:
-                if key == 'tables':
-                    existing_props['tables'] = update_tables(existing_props.get('tables', {}), props.tables or {})
-                else:
-                    existing_props[key] = props.__dict__.get(key)
-        props = PutExtendedDocumentProperties(**existing_props)
-        verb = "updated"
+    #verb = "added"
+    #locked_props = ['id', '_id']
+    #if props.id in extendedprops:
+    #    existing_props = extendedprops[props.id] or {}
+    #    for key, _ in props:
+    #        if key not in locked_props:
+    #            if key == 'tables':
+    #                existing_props['tables'] = update_tables(existing_props.get('tables', {}), props.tables or {})
+    #            else:
+    #                existing_props[key] = props.__dict__.get(key)
+    #    props = PutExtendedDocumentProperties(**existing_props)
+    #    verb = "updated"
 
     # Save the extended properties
     extendedprops[props.id] = props
-    return {"message": f"Document properties {verb} (put)", "id": props.id}
+    return {"message": f"Document properties updated (put)", "id": props.id}
 
 
 def update_tables(existing_tables: dict, new_tables: dict):
