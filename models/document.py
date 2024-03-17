@@ -107,7 +107,6 @@ class ExtendedDocumentProperties(BaseModel):
     pages: Optional[int]
     tables: Optional[dict] = Field(
         None,
-        alias="dict_tables",  # database field name is dict_tables, mapped to tables in the model
         exclude=True,
         description="Always None. Call the documents/tables/csv or documents/tables/json endpoint to get the tables for a document."
         )

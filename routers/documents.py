@@ -50,10 +50,13 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
     documents[doc.id] = doc
     return {'message': "Document added", 'id': doc.id}
 
+
 # Add extended document properties
 @router.post('/props', status_code=status.HTTP_201_CREATED, response_model=ResponseAndId, summary="Add extended document properties")
 # pylint: disable=unused-argument
-async def add_document_props(props: ExtendedDocumentProperties, user: User = Depends(get_current_active_user)):
+async def add_document_props(
+    props: PutExtendedDocumentProperties, user: User = Depends(get_current_active_user)
+):
     document_id = props.id  # Link to document for these props
 
     if document_id not in documents:
@@ -65,12 +68,13 @@ async def add_document_props(props: ExtendedDocumentProperties, user: User = Dep
         existing_props = extendedprops[document_id] or {}
         for key, _ in props:
             existing_props[key] = props.__dict__.get(key)
-        props = ExtendedDocumentProperties(**existing_props)
+        props = PutExtendedDocumentProperties(**existing_props)
         verb = 'updated'
 
     # Add the extended properties
     extendedprops[document_id] = props
     return {'message': f"Document properties {verb}", 'id': document_id}
+
 
 # Get a document by ID or path
 @router.get('/', status_code=status.HTTP_200_OK, response_model=Document, summary='Get a document by ID or path')
