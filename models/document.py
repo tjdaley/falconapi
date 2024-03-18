@@ -28,9 +28,9 @@ class Document(BaseModel):
     page_count: Optional[int]
     client_reference: Optional[str]
     added_username: Optional[str]
-    added_date: datetime = Field(default_factory=datetime.utcnow)
+    added_date: datetime = Field(default_factory=datetime.now)
     updated_username: Optional[str]
-    updated_date: datetime = Field(default_factory=datetime.utcnow)
+    updated_date: datetime = Field(default_factory=datetime.now)
     version: Optional[str] = str(uuid4())
     classification: Optional[str]
     sub_classification: Optional[dict]
