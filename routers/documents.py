@@ -270,6 +270,8 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
     updated_doc.page_count = doc.page_count
     updated_doc.title = doc.title
     updated_doc.type = doc.type
+    updated_doc.page_max = doc.page_max
+    updated_doc.missing_pages = doc.missing_pages
     if doc.classification:
         updated_doc.classification = doc.classification
     if doc.sub_classification:
