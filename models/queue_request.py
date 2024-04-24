@@ -32,7 +32,7 @@ class QueueRequest(BaseModel):
     # validators
     @validator('task')
     def task_must_be_in_list(cls, v):
-        valid_tasks = ['classify', 'summarize', 'transactions', 'page_audit', 'normalize_vendors', 'stop']
+        valid_tasks = ['classify', 'summarize', 'transactions', 'page_audit', 'normalize_vendors', 'extract_bates', 'stop']
         if v not in valid_tasks:
             raise ValueError(f'Task must be one of {valid_tasks}')
         return v
