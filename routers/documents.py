@@ -4,7 +4,7 @@ documents.py - Falcon API Routers for Documents
 from datetime import datetime
 import logging
 from uuid import uuid4
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
 from models.document import Document, PutExtendedDocumentProperties, ExtendedDocumentProperties, DocumentCsvTables, DocumentObjTables, DocumentClassificationStatus
@@ -15,16 +15,11 @@ from database.extendedprops_table import ExtendedPropertiesDict
 from database.classification_tasks import ClassificationTasksTable, ClassificationStatus
 from database.trackers_table import TrackersTable
 from routers.api_version import APIVersion
-from doc_classifier.openai_classifier import Classifier as OpenAIClassifier
-from doc_classifier.palm_classifier import Classifier as PalmClassifier
 
 
 API_VERSION = APIVersion(1, 0).to_str()
 ROUTE_PREFIX = '/documents'
 LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
-OPENAICLASSIFIER = OpenAIClassifier()
-PALMCLASSIFIER = PalmClassifier()
-CLASSIFICATION_TASKS = ClassificationTasksTable()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/token')
 
 router = APIRouter(
@@ -106,71 +101,6 @@ async def get_document_props(doc_id: str, user: User = Depends(get_current_activ
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     return extendedprops[doc_id]
 
-# Get document classification - Synchrnous
-@router.get('/classifysync', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Get document classification synchronously')
-async def get_document_classify_sync(doc_id: str, background_tasks: BackgroundTasks, user: User = Depends(get_current_active_user)):
-    if doc_id not in extendedprops:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
-    if documents[doc_id].added_username != user.username and not user.admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    classification = _classify(doc_id, '')
-    return {
-        'task_id': None,
-        'document_id': doc_id,
-        'status': ClassificationStatus.COMPLETED.value,
-        'message': 'Classification complete',
-        'classification': classification
-    }
-
-# Get document classification - Async
-@router.get('/classify', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Queue document classification and return', description='Queue document classification and return a task_id that can be used to check the status of the classification')
-async def get_document_classify(doc_id: str, background_tasks: BackgroundTasks, user: User = Depends(get_current_active_user)):
-    """
-    Queue a document for classification. Returns a task_id that can be used to check the status of the classification.
-
-    Args:
-        doc_id (str): Document ID
-        background_tasks (BackgroundTasks): Background tasks
-        user (User, optional): User. Defaults to Depends(get_current_active_user).
-
-    Raises:
-        HTTPException: Document not found
-        HTTPException: Unauthorized
-
-    Returns:
-        dict: Classification status
-    """
-    if doc_id not in extendedprops:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {doc_id}")
-    if documents[doc_id].added_username != user.username and not user.admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    classification_task_id = CLASSIFICATION_TASKS.add(doc_id)
-    background_tasks.add_task(_classify, doc_id, classification_task_id)
-    return {
-        'task_id': classification_task_id,
-        'document_id': doc_id,
-        'status': ClassificationStatus.QUEUED.value,
-        'message': 'Classification queued',
-    }
-
-@router.get('/classification', status_code=status.HTTP_200_OK, response_model=DocumentClassificationStatus, summary='Get document classification or classification status')
-async def get_document_classification(task_id: str, user: User = Depends(get_current_active_user)):
-    classification_task = CLASSIFICATION_TASKS.get(task_id)
-    if not classification_task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Classification task not found: {task_id}")
-    if documents[classification_task['document_id']].added_username != user.username and not user.admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    if classification_task['status'] == ClassificationStatus.COMPLETED:
-        return classification_task['classification']
-    return {
-        'task_id': task_id,
-        'document_id': classification_task['document_id'],
-        'status': classification_task['status'],
-        'message': classification_task.get('message'),
-        'classification': classification_task.get('classification')
-    }
-
-
 # Get a document's Tables - CSV or JSON Formats
 @router.get('/tables/csv', status_code=status.HTTP_200_OK, response_model=DocumentCsvTables, summary='Get a document\'s Tables in CSV format')
 async def get_document_tables_csv(doc_id: str, user: User = Depends(get_current_active_user)):
@@ -211,12 +141,6 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     xprops = extendedprops.get(doc_id) or {}
     return {'id': doc_id, 'tables': xprops.get('tables', {}) or {}, 'version': xprops.get('version', '*unversioned*')}
-    #if 'tables' not in xprops:
-    #    tables = {"tables": {}}
-    #    props = xprops.copy()
-    #    props['tables'] = tables
-    #    return props
-    #return extendedprops[doc_id]
 
 # Delete a table from a document given the table_id and the document_id
 @router.delete('/tables', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a table from a document')
@@ -291,20 +215,6 @@ async def update_document_props(
     if documents[props.id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-    # If the document already has extended properties, we need to update them.
-    #verb = "added"
-    #locked_props = ['id', '_id']
-    #if props.id in extendedprops:
-    #    existing_props = extendedprops[props.id] or {}
-    #    for key, _ in props:
-    #        if key not in locked_props:
-    #            if key == 'tables':
-    #                existing_props['tables'] = update_tables(existing_props.get('tables', {}), props.tables or {})
-    #            else:
-    #                existing_props[key] = props.__dict__.get(key)
-    #    props = PutExtendedDocumentProperties(**existing_props)
-    #    verb = "updated"
-
     # Save the extended properties
     extendedprops[props.id] = props
     return {"message": f"Document properties updated (put)", "id": props.id}
@@ -369,57 +279,3 @@ async def delete_document_props(doc_id: str, user: User = Depends(get_current_ac
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     del extendedprops[doc_id]
     return {'message': "Document properties deleted", 'id': doc_id}
-
-
-# Convert classification properties to dict, for JSON response.
-def _props_to_data(oclass: str, oprops: dict, pclass: str, pprops: dict, doc_id: str, task_id: str):
-    data = {
-        'document_id': doc_id,
-        'task_id': task_id,
-        'classifications': [
-            {
-                'classifier': 'openai',
-                'classification': oclass,
-                'properties': oprops
-            },
-            {
-                'classifier': 'palm',
-                'classification': pclass,
-                'properties': pprops
-            }
-        ],
-    }
-    return data
-
-
-# Classify a document
-def _classify(doc_id: str, task_id: str) -> dict:
-    """
-    Classify a document.
-
-    Args:
-        doc_id (str): Document ID
-        task_id (str): Classification task ID (if None, then there is no task_id because this is a synchronous call)
-    
-    Raises:
-        HTTPException: Extended properties not found
-
-    Returns:
-        dict: Document classification    
-    """
-    xprops = extendedprops.get(doc_id)
-    if not xprops:
-        if task_id:
-            CLASSIFICATION_TASKS.update(task_id, ClassificationStatus.FAILED, f"Extended properties not found: {doc_id}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found: {doc_id}")
-
-    if task_id:
-        CLASSIFICATION_TASKS.update(task_id, ClassificationStatus.PROCESSING, "Classifying document")
-    oclass = OPENAICLASSIFIER.classify(xprops['text'])
-    pclass = PALMCLASSIFIER.classify(xprops['text'])
-    oprops = OPENAICLASSIFIER.subclassify(xprops['text'], oclass)
-    pprops = PALMCLASSIFIER.subclassify(xprops['text'], pclass)
-    classification = _props_to_data(oclass, oprops, pclass, pprops, doc_id, task_id)
-    if task_id:
-        CLASSIFICATION_TASKS.update(task_id, ClassificationStatus.COMPLETED, "Classification complete",  classification)
-    return classification
