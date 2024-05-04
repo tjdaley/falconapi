@@ -273,7 +273,7 @@ class TrackersTable(Database):
             return {}  # Error has already been raised...this is just a belt with the suspenders.
         
         dataset: dict = dataset_methods[dataset_name](tracker)
-        return TrackerDatasetResponse({'id': tracker.id, 'dataset_name': dataset_name, 'data': dataset})
+        return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=dataset)
     
     def get_deposits(self, tracker: Tracker) -> dict:
         """
