@@ -284,7 +284,10 @@ class TrackersTable(Database):
                 "id": {"$in": tracker.documents},
                 "tables.transactions": {
                     "$elemMatch": {
-                        "Category": {"$eq": "Deposit"}
+                        "$and": [
+                            {"Category": {"$eq": "Deposit"}},
+                            {"Category": {"$exists": True}}
+                        ]
                     }
                 }
             }
@@ -292,7 +295,10 @@ class TrackersTable(Database):
 
         unwound_element_match = {
             "$match": {
-                "tables.transactions.Category": {"$eq": "Deposit"}
+                "$and": [
+                    {"tables.transactions.Category": {"$eq": "Deposit"}},
+                    {"tables.transactions.Category": {"$exists": True}}
+                ]
             }
         }
 
@@ -307,7 +313,10 @@ class TrackersTable(Database):
                 "id": {"$in": tracker.documents},
                 "tables.transactions": {
                     "$elemMatch": {
-                        "Cash Back": {"$ne": ""}
+                        "$and": [
+                            {"Cash Back": {"$ne": ""}},
+                            {"Cash Back": {"$exists": True}}
+                        ]
                     }
                 }
             }
@@ -315,7 +324,10 @@ class TrackersTable(Database):
 
         unwound_element_match = {
             "$match": {
-                "tables.transactions.Cash Back": {"$ne": ""}
+                "$and": [
+                    {"tables.transactions.Cash Back": {"$ne": ""}},
+                    {"tables.transactions.Cash Back": {"$exists": True}}
+                ]
             }
         }
 
@@ -333,6 +345,10 @@ class TrackersTable(Database):
                         "$or": [
                             {"Transfer from": {"$ne": ""}},
                             {"Transfer to": {"$ne": ""}}
+                        ],
+                        "$and": [
+                            {"Transfer from": {"$exists": True}},  # Ensure "Transfer from" exists
+                            {"Transfer to": {"$exists": True}}  # Ensure "Transfer to" exists
                         ]
                     }
                 }
@@ -344,6 +360,10 @@ class TrackersTable(Database):
                 "$or": [
                     {"tables.transactions.Transfer from": {"$ne": ""}},
                     {"tables.transactions.Transfer to": {"$ne": ""}}
+                ],
+                "$and": [
+                    {"tables.transactions.Transfer from": {"$exists": True}},
+                    {"tables.transactions.Transfer to": {"$exists": True}}
                 ]
             }
         }
