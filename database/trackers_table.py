@@ -6,6 +6,7 @@ from typing import List, Optional
 from models.tracker import Tracker
 from models.document import Document
 from database.documents_table import DocumentsDict
+from models.tracker import TrackerDatasetResponse
 
 COLLECTION = 'trackers'
 
@@ -252,3 +253,143 @@ class TrackersTable(Database):
         Get the number of trackers in the database
         """
         return self.collection.count_documents({})
+    
+    def get_dataset(self, tracker: dict, dataset_name: str) -> TrackerDatasetResponse:
+        """
+        Get a dataset from a tracker
+        """
+        dataset_methods = {
+            'TRANSFERS': self.get_transfers,
+            'CASH_BACK_PURCHASES': self.get_cash_back_purchases,
+            'DEPOSITS': self.get_deposits,
+            #'CHECKS': self.get_checks,
+            #'WIRE_TRANSFERS': self.get_wire_transfers,
+            #'UNIQUE_ACCOUNTS': self.get_unique_accounts,
+            #'MISSING_STATEMENTS': self.get_missing_statements,
+            #'MISSING_PAGES': self.get_missing_pages
+        }
+
+        if dataset_name not in dataset_methods:
+            return {}  # Error has already been raised...this is just a belt with the suspenders.
+        
+        dataset: dict = dataset_methods[dataset_name](tracker)
+        return TrackerDatasetResponse({'id': tracker['id'], 'dataset_name': dataset_name, 'data': dataset})
+    
+    def get_deposits(self, tracker: dict) -> dict:
+        """
+        Get DEPOSITS dataset from a tracker
+        """
+        initial_element_match = {
+            "$match": {
+                "id": {"$in": tracker['documents']},
+                "tables.transactions": {
+                    "$elemMatch": {
+                        "Category": {"$eq": "Deposit"}
+                    }
+                }
+            }
+        }
+
+        unwound_element_match = {
+            "$match": {
+                "tables.transactions.Category": {"$eq": "Deposit"}
+            }
+        }
+
+        return self.get_filtered_transactions(initial_element_match, unwound_element_match)
+    
+    def get_cash_back_purchases(self, tracker: dict) -> dict:
+        """
+        Get CASH_BACK_PURCHASES dataset from a tracker
+        """
+        initial_element_match = {
+            "$match": {
+                "id": {"$in": tracker['documents']},
+                "tables.transactions": {
+                    "$elemMatch": {
+                        "Cash Back": {"$ne": ""}
+                    }
+                }
+            }
+        }
+
+        unwound_element_match = {
+            "$match": {
+                "tables.transactions.Cash Back": {"$ne": ""}
+            }
+        }
+
+        return self.get_filtered_transactions(initial_element_match, unwound_element_match)
+    
+    def get_transfers(self, tracker: dict) -> dict:
+        """
+        Get TRANSFERS dataset from a tracker
+        """
+        initial_element_match = {
+            "$match": {
+                "id": {"$in": tracker['documents']},
+                "tables.transactions": {
+                    "$elemMatch": {
+                        "$or": [
+                            {"Transfer from": {"$ne": ""}},
+                            {"Transfer to": {"$ne": ""}}
+                        ]
+                    }
+                }
+            }
+        }
+
+        unwound_element_match = {
+            "$match": {
+                "$or": [
+                    {"tables.transactions.Transfer from": {"$ne": ""}},
+                    {"tables.transactions.Transfer to": {"$ne": ""}}
+                ]
+            }
+        }
+
+        return self.get_filtered_transactions(initial_element_match, unwound_element_match)
+
+    def get_filtered_transactions(self, initial_element_match, unwound_element_match) -> list[dict]:
+        """
+        Get TRANSFERS dataset from a tracker
+        """
+
+        extendedprops_collection = self.conn[self.database]['extendedprops']
+
+        # MongoDB Aggregation Pipeline
+        pipeline = [
+            initial_element_match,
+            {
+                "$unwind": "$tables.transactions"
+            },
+            unwound_element_match,
+            {
+                "$lookup": {
+                    "from": "documents",  # Specify the collection to join.
+                    "localField": "id",   # Field from the input documents.
+                    "foreignField": "id",  # Field from the documents of the "documents" collection.
+                    "as": "document_details"  # Output array field with the joined documents.
+                }
+            },
+            {
+                "$unwind": "$document_details"  # Unwind the results of the lookup to merge document details
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": 1,
+                    "transaction": "$tables.transactions",
+                    "beginning_bates": "$document_details.beginning_bates",
+                    "ending_bates": "$document_details.ending_bates",
+                    "classification": "$document_details.classification",
+                    "title": "$document_details.title",
+                    "path": "$document_details.path",
+                    "document_date": "$document_details.document_date"
+                }
+            }
+        ]
+
+        # Execute the aggregation pipeline
+        transactions_with_transfer = extendedprops_collection.aggregate(pipeline)
+        return transactions_with_transfer
