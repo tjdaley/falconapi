@@ -275,13 +275,13 @@ class TrackersTable(Database):
         dataset: dict = dataset_methods[dataset_name](tracker)
         return TrackerDatasetResponse({'id': tracker['id'], 'dataset_name': dataset_name, 'data': dataset})
     
-    def get_deposits(self, tracker: dict) -> dict:
+    def get_deposits(self, tracker: Tracker) -> dict:
         """
         Get DEPOSITS dataset from a tracker
         """
         initial_element_match = {
             "$match": {
-                "id": {"$in": tracker['documents']},
+                "id": {"$in": tracker.documents},
                 "tables.transactions": {
                     "$elemMatch": {
                         "Category": {"$eq": "Deposit"}
@@ -298,13 +298,13 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_cash_back_purchases(self, tracker: dict) -> dict:
+    def get_cash_back_purchases(self, tracker: Tracker) -> dict:
         """
         Get CASH_BACK_PURCHASES dataset from a tracker
         """
         initial_element_match = {
             "$match": {
-                "id": {"$in": tracker['documents']},
+                "id": {"$in": tracker.documents},
                 "tables.transactions": {
                     "$elemMatch": {
                         "Cash Back": {"$ne": ""}
@@ -321,13 +321,13 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_transfers(self, tracker: dict) -> dict:
+    def get_transfers(self, tracker: Tracker) -> dict:
         """
         Get TRANSFERS dataset from a tracker
         """
         initial_element_match = {
             "$match": {
-                "id": {"$in": tracker['documents']},
+                "id": {"$in": tracker.documents},
                 "tables.transactions": {
                     "$elemMatch": {
                         "$or": [
