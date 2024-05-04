@@ -90,7 +90,7 @@ class TrackerDatasetRequest(BaseModel):
 		}
 
 	# validators
-	@validator('dataset_id')
+	@validator('dataset_name')
 	def dataset_name_must_be_in_list(cls, v):
 		if v not in DATASET_NAMES:
 			raise ValueError(f'Dataset name must be one of {DATASET_NAMES}')
