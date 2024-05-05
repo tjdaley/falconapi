@@ -2,10 +2,10 @@
 trackers_table.py - Trackers Table
 """
 from database.db import Database
-from typing import List, Optional
+from typing import List
 from models.tracker import Tracker
 from models.document import Document
-from database.documents_table import DocumentsDict, DocumentsTable
+from database.documents_table import DocumentsDict
 from models.tracker import TrackerDatasetResponse
 
 COLLECTION = 'trackers'
@@ -116,7 +116,7 @@ class TrackersTable(Database):
         """
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
-        self.documents_table = DocumentsTable()
+        self.documents = self.conn[self.database]['documents']
 
     def get_tracker(self, id: str) -> Tracker:
         """
@@ -263,7 +263,7 @@ class TrackersTable(Database):
             'TRANSFERS': self.get_transfers,
             'CASH_BACK_PURCHASES': self.get_cash_back_purchases,
             'DEPOSITS': self.get_deposits,
-            'TRACKER_LIST': self.documents_table.get_documents_for_tracker,
+            'TRACKER_LIST': self.get_documents_for_tracker,
             #'CHECKS': self.get_checks,
             #'WIRE_TRANSFERS': self.get_wire_transfers,
             #'UNIQUE_ACCOUNTS': self.get_unique_accounts,
@@ -277,7 +277,14 @@ class TrackersTable(Database):
         dataset: list = list(dataset_methods[dataset_name](tracker))
         return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=dataset)
     
-    def get_deposits(self, tracker: Tracker) -> dict:
+    def get_documents_for_tracker(self, tracker: Tracker) -> list[dict]:
+        """
+        Get TRACKER_LIST dataset from a tracker
+        """
+        docs = list(self.documents.find({'id':{'$in': tracker.documents}}, {'_id': 0}))
+        return docs
+    
+    def get_deposits(self, tracker: Tracker) -> list[dict]:
         """
         Get DEPOSITS dataset from a tracker
         """
@@ -306,7 +313,7 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_cash_back_purchases(self, tracker: Tracker) -> dict:
+    def get_cash_back_purchases(self, tracker: Tracker) -> list[dict]:
         """
         Get CASH_BACK_PURCHASES dataset from a tracker
         """
@@ -335,7 +342,7 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_transfers(self, tracker: Tracker) -> dict:
+    def get_transfers(self, tracker: Tracker) -> list[dict]:
         """
         Get TRANSFERS dataset from a tracker
         """
