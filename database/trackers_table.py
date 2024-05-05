@@ -5,7 +5,7 @@ from database.db import Database
 from typing import List, Optional
 from models.tracker import Tracker
 from models.document import Document
-from database.documents_table import DocumentsDict
+from database.documents_table import DocumentsDict, DocumentsTable
 from models.tracker import TrackerDatasetResponse
 
 COLLECTION = 'trackers'
@@ -116,6 +116,7 @@ class TrackersTable(Database):
         """
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
+        self.documents_table = DocumentsTable()
 
     def get_tracker(self, id: str) -> Tracker:
         """
@@ -262,6 +263,7 @@ class TrackersTable(Database):
             'TRANSFERS': self.get_transfers,
             'CASH_BACK_PURCHASES': self.get_cash_back_purchases,
             'DEPOSITS': self.get_deposits,
+            'TRACKER_LIST': self.documents_table.get_documents_for_tracker,
             #'CHECKS': self.get_checks,
             #'WIRE_TRANSFERS': self.get_wire_transfers,
             #'UNIQUE_ACCOUNTS': self.get_unique_accounts,
