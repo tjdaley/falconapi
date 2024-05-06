@@ -1,8 +1,11 @@
 """
 trackers_table.py - Trackers Table
 """
-from database.db import Database
+from collections import defaultdict
+import calendar
 from typing import List
+
+from database.db import Database
 from models.tracker import Tracker
 from models.document import Document
 from database.documents_table import DocumentsDict
@@ -255,6 +258,41 @@ class TrackersTable(Database):
         """
         return self.collection.count_documents({})
     
+    def get_compliance_matrix(self, tracker: Tracker, classification: str) -> dict:
+        """
+        Get a compliance matrix for a tracker
+        """
+        # Fetch and organize documents
+        selection = {
+            'id': {'$in': tracker.documents},
+            'classification': classification
+        }
+
+        projection = {
+            'id': 1,
+            'sub_classification.financial institution': 1,
+            'sub_classification.account number': 1,
+            'document_date': 1,
+            'beginning_bates': 1,
+            'path': 1
+        }
+        cursor = self.documents.find(selection, projection).sort('document_date', 1)
+        data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
+        
+        for doc in cursor:
+            fi = doc['sub_classification']['financial institution']
+            acc = doc['sub_classification']['account number']
+            date = doc['document_date']
+            year, month, _ = map(int, date.split('-'))
+            month_name = calendar.month_name[month]
+            
+            key = f"{fi} - {acc}"
+            data[key][year][month_name] = doc['beginning_bates']
+        
+        # Convert defaultdict to regular dict for Jinja compatibility
+        final_data = {k: dict(v) for k, v in data.items()}
+        return final_data
+
     def get_dataset(self, tracker: Tracker, dataset_name: str) -> TrackerDatasetResponse:
         """
         Get a dataset from a tracker

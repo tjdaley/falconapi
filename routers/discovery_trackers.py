@@ -261,3 +261,16 @@ async def get_datasets(tracker_id: str, dataset_name: str, user: User = Depends(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     log_audit_event('get_datasets', tracker_id, user, dataset_name)
     return tracker_db.get_dataset(tracker, dataset_name)
+
+# Get compliance matrix for a tracker
+@router.get('/{tracker_id}/compliance_matrix/{classification}', status_code=status.HTTP_200_OK, summary='Get compliance matrix for a tracker')
+async def get_compliance_matrix(tracker_id: str, classification: str, user: User = Depends(get_current_active_user)):
+    tracker = trackers.get(tracker_id)
+    if tracker is None:
+        log_audit_event('get_compliance_matrix', tracker_id, user, success=False, message=f"Tracker {tracker_id} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
+    if user.username not in tracker.auth_usernames and not user.admin:
+        log_audit_event('get_compliance_matrix', tracker_id, user, success=False, message=f"User {user.username} not authorized to get compliance matrix from tracker {tracker_id}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    log_audit_event('get_compliance_matrix', tracker_id, user, classification)
+    return tracker_db.get_compliance_matrix(tracker, classification)
