@@ -277,8 +277,8 @@ class TrackersTable(Database):
             'path': 1
         }
         cursor = self.documents.find(selection, projection).sort('document_date', 1)
-        data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: None)))
-        
+        data = defaultdict(lambda: defaultdict(lambda: {calendar.month_name[m]: None for m in range(1, 13)}))
+         
         for doc in cursor:
             fi = doc['sub_classification']['financial institution']
             acc = doc['sub_classification']['account number']
