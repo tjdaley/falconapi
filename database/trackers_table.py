@@ -294,7 +294,6 @@ class TrackersTable(Database):
             
             for doc in cursor:
                 date = doc.get('document_date', '')
-                print(f"@@@@ Document id: {doc['id']}") # Debugging
                 subclass = doc.get('sub_classification', {})
                 year, month, _ = map(int, date.split('-'))
                 month_name = calendar.month_name[month]
