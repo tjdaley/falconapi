@@ -294,7 +294,12 @@ class TrackersTable(Database):
                 # key = f"{fi} - {acc}"
                 key = prompt_data.make_compliance_key(classification, subclass)
                 if key:
-                    data[key][year][month_name] = doc['beginning_bates']
+                    data[key][year][month_name] = {
+                        'bates': doc.get('beginning_bates', "X"),
+                        'path': doc.get('path', ""),
+                        'id': doc.get('id', ""),
+                        'date': doc.get('document_date', ""),
+                    }
             
             # Convert defaultdict to regular dict for Jinja compatibility
             final_data = {k: dict(v) for k, v in data.items()}
