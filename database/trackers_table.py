@@ -10,6 +10,7 @@ from models.tracker import Tracker
 from models.document import Document
 from database.documents_table import DocumentsDict
 from models.tracker import TrackerDatasetResponse
+from doc_classifier.openai_prompt_data import PromptData
 
 COLLECTION = 'trackers'
 
@@ -262,36 +263,43 @@ class TrackersTable(Database):
         """
         Get a compliance matrix for a tracker
         """
-        # Fetch and organize documents
-        selection = {
-            'id': {'$in': tracker.documents},
-            'classification': classification
-        }
+        prompt_data = PromptData()
+        classifications = prompt_data.compliance_classifications()
+        class_matrix = {}
+        sorted_classifications = sorted(classifications)
 
-        projection = {
-            'id': 1,
-            'sub_classification.financial institution': 1,
-            'sub_classification.account number': 1,
-            'document_date': 1,
-            'beginning_bates': 1,
-            'path': 1
-        }
-        cursor = self.documents.find(selection, projection).sort('document_date', 1)
-        data = defaultdict(lambda: defaultdict(lambda: {calendar.month_name[m]: None for m in range(1, 13)}))
-         
-        for doc in cursor:
-            fi = doc['sub_classification']['financial institution']
-            acc = doc['sub_classification']['account number']
-            date = doc['document_date']
-            year, month, _ = map(int, date.split('-'))
-            month_name = calendar.month_name[month]
+        for classification in sorted_classifications:
+            # Fetch and organize documents
+            selection = {
+                'id': {'$in': tracker.documents},
+                'classification': classification
+            }
+
+            projection = {
+                'id': 1,
+                'sub_classification': 1,
+                'document_date': 1,
+                'beginning_bates': 1,
+                'path': 1
+            }
+            cursor = self.documents.find(selection, projection).sort('document_date', 1)
+            data = defaultdict(lambda: defaultdict(lambda: {calendar.month_name[m]: None for m in range(1, 13)}))
             
-            key = f"{fi} - {acc}"
-            data[key][year][month_name] = doc['beginning_bates']
-        
-        # Convert defaultdict to regular dict for Jinja compatibility
-        final_data = {k: dict(v) for k, v in data.items()}
-        return final_data
+            for doc in cursor:
+                date = doc.get('document_date', '')
+                subclass = doc.get('sub_classification', {})
+                year, month, _ = map(int, date.split('-'))
+                month_name = calendar.month_name[month]
+                
+                # key = f"{fi} - {acc}"
+                key = prompt_data.make_compliance_key(classification, subclass)
+                if key:
+                    data[key][year][month_name] = doc['beginning_bates']
+            
+            # Convert defaultdict to regular dict for Jinja compatibility
+            final_data = {k: dict(v) for k, v in data.items()}
+            class_matrix[classification] = final_data
+        return class_matrix
 
     def get_dataset(self, tracker: Tracker, dataset_name: str) -> TrackerDatasetResponse:
         """
