@@ -272,7 +272,8 @@ class TrackersTable(Database):
             # Fetch and organize documents
             selection = {
                 'id': {'$in': tracker.documents},
-                'classification': classification
+                'classification': classification,
+                'sub_classification': {'$exists': True}
             }
 
             projection = {
