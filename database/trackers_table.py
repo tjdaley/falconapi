@@ -298,7 +298,8 @@ class TrackersTable(Database):
             
             # Convert defaultdict to regular dict for Jinja compatibility
             final_data = {k: dict(v) for k, v in data.items()}
-            class_matrix[classification] = final_data
+            if final_data:
+                class_matrix[classification] = final_data
         return class_matrix
 
     def get_dataset(self, tracker: Tracker, dataset_name: str) -> TrackerDatasetResponse:
