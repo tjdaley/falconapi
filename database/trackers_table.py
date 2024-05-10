@@ -277,7 +277,8 @@ class TrackersTable(Database):
                     '$exists': True,
                     '$ne': '',  # Ensure it's not an empty string
                     '$ne': {},  # Ensure it's not an empty dictionary
-                    '$ne': []   # Optionally, ensure it's not an empty array if applicable
+                    '$ne': [],  # Ensure it's not an empty array if applicable
+                    '$ne': None # Ensure it's not None
                 }
             }
 
@@ -293,6 +294,7 @@ class TrackersTable(Database):
             
             for doc in cursor:
                 date = doc.get('document_date', '')
+                print(f"@@@@ Document id: {doc['id']}") # Debugging
                 subclass = doc.get('sub_classification', {})
                 year, month, _ = map(int, date.split('-'))
                 month_name = calendar.month_name[month]
