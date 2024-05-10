@@ -286,6 +286,7 @@ class TrackersTable(Database):
                 'id': 1,
                 'sub_classification': 1,
                 'document_date': 1,
+                'produced_date': 1,
                 'beginning_bates': 1,
                 'path': 1
             }
@@ -305,7 +306,7 @@ class TrackersTable(Database):
                         'bates': doc.get('beginning_bates', "X"),
                         'path': doc.get('path', ""),
                         'id': doc.get('id', ""),
-                        'date': doc.get('document_date', ""),
+                        'date': doc.get('produced_date', ""),
                     }
             
             # Convert defaultdict to regular dict for Jinja compatibility
