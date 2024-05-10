@@ -273,7 +273,12 @@ class TrackersTable(Database):
             selection = {
                 'id': {'$in': tracker.documents},
                 'classification': classification,
-                'sub_classification': {'$exists': True}
+                'sub_classification': {
+                    '$exists': True,
+                    '$ne': '',  # Ensure it's not an empty string
+                    '$ne': {},  # Ensure it's not an empty dictionary
+                    '$ne': []   # Optionally, ensure it's not an empty array if applicable
+                }
             }
 
             projection = {
