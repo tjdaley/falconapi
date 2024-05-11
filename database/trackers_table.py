@@ -315,7 +315,7 @@ class TrackersTable(Database):
                     }
             
             # Convert defaultdict to regular dict for Jinja compatibility
-            data[key][0] = metadata
+            data[key]['metadata'] = metadata
             final_data = {k: dict(v) for k, v in data.items()}
             if final_data:
                 class_matrix[classification] = final_data
