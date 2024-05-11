@@ -292,6 +292,10 @@ class TrackersTable(Database):
             }
             cursor = self.documents.find(selection, projection).sort('document_date', 1)
             data = defaultdict(lambda: defaultdict(lambda: {calendar.month_name[m]: None for m in range(1, 13)}))
+            subclass = {
+                "key_fields": prompt_data.compliance_key_fields(classification),
+                "doc_ids": []
+            }
             
             for doc in cursor:
                 date = doc.get('document_date', '')
@@ -302,6 +306,7 @@ class TrackersTable(Database):
                 # key = f"{fi} - {acc}"
                 key = prompt_data.make_compliance_key(classification, subclass)
                 if key:
+                    subclass["doc_ids"].append(doc['id'])
                     data[key][year][month_name] = {
                         'bates': doc.get('beginning_bates', "X"),
                         'path': doc.get('path', ""),
@@ -310,6 +315,7 @@ class TrackersTable(Database):
                     }
             
             # Convert defaultdict to regular dict for Jinja compatibility
+            data[key][0] = subclass
             final_data = {k: dict(v) for k, v in data.items()}
             if final_data:
                 class_matrix[classification] = final_data
