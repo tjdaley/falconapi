@@ -22,7 +22,6 @@ LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
 JOBSTATUS = JobStatus()
 
 
-
 router = APIRouter(
     tags=["Utility Functions"],
     prefix=ROUTE_PREFIX,
