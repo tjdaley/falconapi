@@ -11,13 +11,16 @@ from util.utility import Utilities
 from models.realproperty import RealPropertyInfoRequest, RealPropertyInfoResponse
 from models.queue_request import QueueRequest
 from models.user import User
-from distributed_work_queue.workqueue import DistributedWorkQueue
+from distributed_work_queue.workqueue import DistributedWorkQueue, JobStatus
 from auth.handler import get_current_active_user
 
 load_dotenv()
 API_VERSION = APIVersion(1, 0).to_str()
 ROUTE_PREFIX = '/util'
 LOGGER = logging.getLogger(f'falconapi{ROUTE_PREFIX}')
+# Global job status object
+JOBSTATUS = JobStatus()
+
 
 
 router = APIRouter(
@@ -70,4 +73,10 @@ async def queue_request(
         LOGGER.info(f"Ignoring {request.task} task")
         return {"message": f"{request.task} task ignored, fucko", "id": request.request_id}
     work_queue.enqueue_work(request.json())
+    JOBSTATUS.add_job(request.request_id)
     return {"message": f"{request.task} task queued", "id": request.request_id}
+
+# Check the status of a queued request
+@router.get('/status', status_code=status.HTTP_200_OK, summary='Check the Status of a Queued Request')
+async def queue_status(request_id: str, user: User = Depends(get_current_active_user)):
+    return JOBSTATUS.get_status(request_id)
