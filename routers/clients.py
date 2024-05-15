@@ -1,7 +1,7 @@
 """
 users.py - Users Routes
 """
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ CLIENTS_TABLE = ClientsTable()
 ROUTE_PREFIX = '/clients'
 
 router = APIRouter(
-    tags=["Users"],
+    tags=["Clients"],
     prefix=ROUTE_PREFIX,
     responses={404: {"description": "Not found"}}
 )
@@ -27,7 +27,7 @@ class InsertException(BaseModel):
     """A class for responding to client registration errors"""
     detail: Optional[str] = "Client already exists"
 
-@router.get("/", response_model=Client ,tags=["Clients"], summary="Get all clients")
+@router.get("/", response_model=List[Client] ,tags=["Clients"], summary="Get all clients")
 async def get_client(id: str, current_user: User = Depends(get_current_active_user)) -> Client:
     """
     Return client's information.
@@ -105,7 +105,7 @@ async def update_client(client: Client, current_user: User = Depends(get_current
     return client
 
 @router.delete(
-    '/',
+    '/{id}',
     status_code=status.HTTP_200_OK,
     summary="Delete a client"
 )
