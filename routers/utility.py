@@ -11,7 +11,8 @@ from util.utility import Utilities
 from models.realproperty import RealPropertyInfoRequest, RealPropertyInfoResponse
 from models.queue_request import QueueRequest
 from models.user import User
-from distributed_work_queue.workqueue import DistributedWorkQueue, JobStatus
+from distributed_work_queue.workqueue import DistributedWorkQueue
+from distributed_work_queue.jobstatus import JobStatus
 from auth.handler import get_current_active_user
 
 load_dotenv()
