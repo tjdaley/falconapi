@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.api_version import APIVersion
 from routers.documents import router as documents
 from routers.childsupport import router as childsupport
+from routers.clients import router as clients
 from routers.discovery_trackers import router as discovery_trackers
 from routers.users import router as users
 from routers.utility import router as utility
@@ -50,6 +51,7 @@ app.include_router(users, prefix=API_VERSION_PREFIX)
 app.include_router(utility, prefix=API_VERSION_PREFIX)
 app.include_router(documents, prefix=API_VERSION_PREFIX)
 app.include_router(childsupport, prefix=API_VERSION_PREFIX)
+app.include_router(clients, prefix=API_VERSION_PREFIX)
 
 @app.get(
     '/',
