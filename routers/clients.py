@@ -1,7 +1,7 @@
 """
 users.py - Users Routes
 """
-from typing import Optional, List
+from typing import Optional, List, Union
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -27,7 +27,7 @@ class InsertException(BaseModel):
     """A class for responding to client registration errors"""
     detail: Optional[str] = "Client already exists"
 
-@router.get("/", response_model=List[Client] ,tags=["Clients"], summary="Get all clients")
+@router.get("/", response_model=Union[List[Client], Client] ,tags=["Clients"], summary="Get all clients")
 async def get_client(id: str, current_user: User = Depends(get_current_active_user)) -> Client:
     """
     Return client's information.
