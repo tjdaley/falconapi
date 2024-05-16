@@ -19,7 +19,8 @@ class ClientsTable(Database):
         Get a client from the database
         """
         if id == '*':
-            return self.get_all_clients(username)
+            client_docs = self.get_all_clients(username)
+            return [Client(**client_doc) for client_doc in client_docs]
         client_doc = self.collection.find_one({'id': id, 'created_by': username})
         return Client(**client_doc) if client_doc else None
 
