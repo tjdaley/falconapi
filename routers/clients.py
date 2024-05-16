@@ -76,16 +76,15 @@ async def register_client(client: Client, current_user: User = Depends(get_curre
         created_by=user_email,
         enabled=True,
     )
-    result = CLIENTS_TABLE.create_client(client)
+    result = CLIENTS_TABLE.create_client(new_client)
     return {
         'id': new_client.id,
         'name': client.name,
         'billing_number': client.billing_number,
-        'created_by': current_user.email,
+        'created_by': user_email,
         'enabled': True,
-        'message': 'Client created successfully',
-        'status': 'success',
-        '_id': str(result.inserted_id),
+        'success': result.get('success', False)
+        # '_id': str(result.inserted_id),
     }
 
 @router.put(
