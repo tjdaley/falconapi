@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from models.client import Client
 from models.user import User
+from models.tracker import TrackerDatasetResponse
 from routers.api_version import APIVersion
 from database.clients_table import ClientsTable
 from auth.handler import get_current_active_user
@@ -38,7 +39,8 @@ async def get_client(id: str, current_user: User = Depends(get_current_active_us
     Returns:
         User: The User object if the user is active, None otherwise.
     """
-    return CLIENTS_TABLE.get_client(id, current_user.email)
+    data = CLIENTS_TABLE.get_client(id, current_user.email)
+    return TrackerDatasetResponse(id=id, dataset_name='clients', data=data)
 
 @router.post(
     '/',
