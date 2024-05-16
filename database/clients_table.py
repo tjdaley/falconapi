@@ -1,6 +1,7 @@
 """
 users_table.py - Users Table
 """
+from typing import List
 from database.db import Database
 from models.client import Client
 
@@ -14,7 +15,7 @@ class ClientsTable(Database):
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
 
-    def get_client(self, id: str, username: str) -> Client:
+    def get_client(self, id: str, username: str) -> List[Client]:
         """
         Get a client from the database
         """
@@ -22,7 +23,7 @@ class ClientsTable(Database):
             client_docs = self.get_all_clients(username)
             return [Client(**client_doc) for client_doc in client_docs]
         client_doc = self.collection.find_one({'id': id, 'created_by': username})
-        return Client(**client_doc) if client_doc else None
+        return [Client(**client_doc)] if client_doc else []
 
     def create_client(self, client: Client) -> dict:
         """
