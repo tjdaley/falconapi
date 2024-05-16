@@ -9,7 +9,7 @@ from models.client import Client
 from models.user import User
 from routers.api_version import APIVersion
 from database.clients_table import ClientsTable
-from auth.handler import create_access_token, get_current_active_user, Token
+from auth.handler import get_current_active_user
 
 
 API_VERSION = APIVersion(1, 0).to_str()

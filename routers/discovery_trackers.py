@@ -260,7 +260,9 @@ async def get_datasets(tracker_id: str, dataset_name: str, user: User = Depends(
         log_audit_event('get_datasets', tracker_id, user, success=False, message=f"User {user.username} not authorized to get datasets from tracker {tracker_id}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     log_audit_event('get_datasets', tracker_id, user, dataset_name)
-    return tracker_db.get_dataset(tracker, dataset_name)
+    result = tracker_db.get_dataset(tracker, dataset_name)
+    LOGGER.info("get_datasets: tracker_id=%s, dataset_name=%s, result: %s", tracker_id, dataset_name, result)
+    return result
 
 # Get compliance matrix for a tracker
 @router.get('/{tracker_id}/compliance_matrix/{classification}', status_code=status.HTTP_200_OK, summary='Get compliance matrix for a tracker')
