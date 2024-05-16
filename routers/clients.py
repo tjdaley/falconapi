@@ -28,8 +28,8 @@ class InsertException(BaseModel):
     """A class for responding to client registration errors"""
     detail: Optional[str] = "Client already exists"
 
-@router.get("/", response_model=Union[List[Client], Client] ,tags=["Clients"], summary="Get all clients")
-async def get_client(id: str, current_user: User = Depends(get_current_active_user)) -> Client:
+@router.get("/", response_model=Union[TrackerDatasetResponse, Client] ,tags=["Clients"], summary="Get all clients")
+async def get_client(id: str, current_user: User = Depends(get_current_active_user)) -> TrackerDatasetResponse:
     """
     Return client's information.
 
