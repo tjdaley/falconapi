@@ -14,6 +14,8 @@ class User(BaseModel):
     token: Optional[str] = None
     hashed_password: Optional[str] = None
     version: Optional[str] = str(uuid4())
+    user_id: Optional[str] = ''
+    twilio_factor_id: Optional[str] = ''
 
     class Config:
         orm_mode = True
@@ -24,6 +26,8 @@ class User(BaseModel):
                 "full_name": "Thomas J. Daley, Esq.",
                 "disabled": False,
                 "admin": False,
+                "user_id": "UUIDXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                "twilio_factor_id": "FAXXXXXXXXXXXXXXXXXXXXXXXXXX"
             }
         }
 
