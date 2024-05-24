@@ -1,4 +1,4 @@
-"""
+_id"""
 handler.py - Handle Authentication
 """
 from fastapi import Depends, HTTPException, status
@@ -45,7 +45,7 @@ def token_response(token: str, user: User) -> Token:
         "access_token": token,
         "token_type": "bearer"
     }
-    return Token(**user.dict(), **token_info)
+    return Token(**user.dict(), **token_info, user_id=user.id)
 
 """
 Create an access token for a user.
