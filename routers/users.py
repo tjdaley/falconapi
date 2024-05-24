@@ -94,7 +94,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token_response = create_access_token(user.username)
+    token_response = create_access_token(user)
     return token_response
 
 @router.get("/me")
