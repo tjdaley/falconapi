@@ -62,7 +62,7 @@ def create_access_token(user: User, expires_delta: timedelta = None) -> Dict[str
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     payload = {
-        "sub": username,
+        "sub": user.username,
         "exp": expire
     }
 
