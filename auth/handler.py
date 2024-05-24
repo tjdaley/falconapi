@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import time
 from typing import Dict, Optional
+from typing_extensions import Annotated
 import os
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
@@ -32,8 +33,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_id: str
-    twilio_factor_id: str
+    id: Annotated[str, Field(serialization_alias='user_id', default='')]
+    twilio_factor_id: Annotated[str, Field(default='')]
 
 class TokenData(BaseModel):
     username: Optional[str] = None
