@@ -3,7 +3,7 @@ handler.py - Handle Authentication
 """
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import time
 from typing import Dict, Optional
 from typing_extensions import Annotated
