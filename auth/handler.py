@@ -32,7 +32,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_id: str = Field(validation_alias='id', default='')  # the field name when serialized is 'user_id', db name is 'id'
+    user_id: str = Field(default='')  # the field name when serialized is 'user_id', db name is 'id'
     twilio_factor_id: str = Field(default='')
 
 
@@ -45,7 +45,7 @@ def token_response(token: str, user: User) -> Token:
         "access_token": token,
         "token_type": "bearer"
     }
-    return Token(**user.dict(), **token_info)
+    return Token(**user.dict(), **token_info, user_id=user.id)
 
 """
 Create an access token for a user.
