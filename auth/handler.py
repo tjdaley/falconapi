@@ -1,4 +1,4 @@
-_id"""
+"""
 handler.py - Handle Authentication
 """
 from fastapi import Depends, HTTPException, status
