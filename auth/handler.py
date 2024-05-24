@@ -44,7 +44,7 @@ def token_response(token: str, user: User) -> Token:
         "access_token": token,
         "token_type": "bearer"
     }
-    return {**user, **token_info}
+    return {**user.dict(), **token_info}
 
 """
 Create an access token for a user.
