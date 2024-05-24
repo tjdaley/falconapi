@@ -40,7 +40,7 @@ class TokenData(BaseModel):
 
 
 def token_response(token: str, user: User) -> Token:
-    token_info {
+    token_info = {
         "access_token": token,
         "token_type": "bearer"
     }
