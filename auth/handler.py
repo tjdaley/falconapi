@@ -32,16 +32,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user_id: str
+    twilio_factor_id: str
 
 class TokenData(BaseModel):
     username: Optional[str] = None
 
 
-def token_response(token: str) -> Token:
-    return {
+def token_response(token: str, user: User) -> Token:
+    token_info {
         "access_token": token,
         "token_type": "bearer"
     }
+    return {**user, **token_info}
 
 """
 Create an access token for a user.
@@ -52,7 +55,7 @@ Args:
 Returns:
     str: The JWT-encoded access token.
 """
-def create_access_token(username: str, expires_delta: timedelta = None) -> Dict[str, str]:
+def create_access_token(user: User, expires_delta: timedelta = None) -> Dict[str, str]:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -65,7 +68,7 @@ def create_access_token(username: str, expires_delta: timedelta = None) -> Dict[
 
     token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
-    return token_response(token)
+    return token_response(token, user)
 
 """
 Decode JWT token and return the username.
