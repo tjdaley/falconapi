@@ -3,7 +3,7 @@ user.py - User model
 """
 from typing import Optional
 from uuid import uuid4
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class User(BaseModel):
     username: str
@@ -14,7 +14,7 @@ class User(BaseModel):
     token: Optional[str] = None
     hashed_password: Optional[str] = None
     version: Optional[str] = str(uuid4())
-    user_id: Optional[str] = ''
+    user_id: str = Field(validation_alias='id')
     twilio_factor_id: Optional[str] = ''
 
     class Config:
