@@ -300,7 +300,10 @@ class TrackersTable(Database):
             for doc in cursor:
                 date = doc.get('document_date', '')
                 subclass = doc.get('sub_classification', {})
-                year, month, _ = map(int, date.split('-'))
+                try:
+                    year, month, _ = map(int, date.split('-'))
+                except ValueError:
+                    continue  # skip document with invalid date string
                 month_name = calendar.month_name[month]
                 
                 # key = f"{fi} - {acc}"
