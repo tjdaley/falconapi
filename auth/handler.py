@@ -32,7 +32,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'api/{API_VERSION}{ROUTE_PREFIX}/
 class Token(BaseModel):
     access_token: str
     token_type: str
-    id: str = Field(serialization_alias='user_id', default='')
+    id: str = Field(alias='user_id', default='')  # the field name when serialized is 'user_id'
     twilio_factor_id: str = Field(default='')
 
     class Config:
