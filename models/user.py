@@ -14,7 +14,7 @@ class User(BaseModel):
     token: Optional[str] = None
     hashed_password: Optional[str] = None
     version: Optional[str] = str(uuid4())
-    user_id: str = Field(validation_alias='id', default='')
+    id: str = Field(default='')
     twilio_factor_id: Optional[str] = ''
 
     class Config:
