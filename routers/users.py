@@ -1,6 +1,8 @@
 """
 users.py - Users Routes
 """
+import json
+import os
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -15,6 +17,7 @@ from auth.handler import create_access_token, get_current_active_user, Token
 API_VERSION = APIVersion(1, 0).to_str()
 USERS_TABLE = UsersTable()
 ROUTE_PREFIX = '/users'
+SITE_CODES_FILE = 'site_codes.json'
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -130,6 +133,8 @@ async def register_user(user_registration: UserRegistration) -> RegistrationResp
         Raises:
             HTTPException: If the user already exists.
     """
+    if not validate_site_code(user_registration.site_code):
+        raise HTTPException(status_code=403, detail="Unauthorized site for user registration")
     user = USERS_TABLE.get_user_by_username(user_registration.username)
     if user:
         raise HTTPException(status_code=400, detail="User already exists")
@@ -151,3 +156,20 @@ async def register_user(user_registration: UserRegistration) -> RegistrationResp
         'status': 'success',
         'user_id': str(result.inserted_id)
     }
+
+#----------------------------------------------------------
+# U T I L I T Y   F U N C T I O N S
+#----------------------------------------------------------
+def validate_site_code(site_code: str) -> bool:
+    """
+    Validate the site code for a user registration request.
+
+    Args:
+        site_code(str): Site code from site seeking to register user
+
+    Returns:
+        (bool): True is validated otherwise False.
+    """
+    with open(SITE_CODES_FILE, 'r') as file:
+        site_codes = json.load(file)
+    return site_code in site_codes
