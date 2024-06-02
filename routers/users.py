@@ -32,6 +32,9 @@ class InsertException(BaseModel):
     """A class for responding to user registration errors"""
     detail: Optional[str] = "User already exists"
 
+class LookupException(BaseMOdel):
+    detail: Optional[str] = "Users.id not found"
+
 def verify_password(plain_password, hashed_password) -> bool:
     """
     Verify that the password we received, when hashed, matches the hashed password in the database.
@@ -130,9 +133,10 @@ async def get_user(user_id: str) -> User:
     Returns:
         User record or error
     """
-    user = USERS_TABLE.get_user_by_id(user_id)
-    result_user = User(user)
-    return result_user.json()
+    user: User = USERS_TABLE.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User ID {user_id} not found.")
+    return user
 
 @router.post(
     '/register',
