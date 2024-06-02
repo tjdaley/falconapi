@@ -134,7 +134,7 @@ async def get_user(user_id: str, site_code: str) -> User:
     Returns:
         User record or error
     """
-    if not validate_site_code(user_registration.site_code):
+    if not validate_site_code(site_code):
         raise HTTPException(status_code=403, detail="Unauthorized site for user retrieval")
     user: User = USERS_TABLE.get_user_by_id(user_id)
     if not user:
