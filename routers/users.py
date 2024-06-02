@@ -27,6 +27,12 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
+# Force an error if the site codes file is missing or otherwise unloadable
+try:
+    validate_site_code('x')
+except Exception as e:
+    print("Cannot open", SITE_CODES_FILE, str(e))
+
 # Class for responding to user registration
 class InsertException(BaseModel):
     """A class for responding to user registration errors"""
