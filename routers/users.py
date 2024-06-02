@@ -32,7 +32,7 @@ class InsertException(BaseModel):
     """A class for responding to user registration errors"""
     detail: Optional[str] = "User already exists"
 
-class LookupException(BaseMOdel):
+class LookupException(BaseModel):
     detail: Optional[str] = "Users.id not found"
 
 def verify_password(plain_password, hashed_password) -> bool:
