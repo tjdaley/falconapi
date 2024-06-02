@@ -65,7 +65,7 @@ class UsersTable(Database):
         """
         Get a user from the database by id
         """
-        user_doc = self.collection.find_one({'_id': user_id})
+        user_doc = self.collection.find_one({'id': user_id})
         return User(**user_doc) if user_doc else None
 
     def get_user_by_username(self, username: str) -> User:
