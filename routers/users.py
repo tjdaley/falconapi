@@ -140,7 +140,9 @@ async def register_user(user_registration: UserRegistration) -> RegistrationResp
         full_name=user_registration.full_name,
         admin=False,
         disabled=False,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        twilio_factor_id=user_registration.twilio_factor_id,
+        phone_number=user_registration.phone_number
     )
     result = USERS_TABLE.create_user(user)
     return {
