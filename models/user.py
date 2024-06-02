@@ -39,6 +39,7 @@ class UserRegistration(BaseModel):
     password: str
     twilio_factor_id: Optional[str] = ''
     phone_number: Optional[str] = ''
+    site_code: str
 
     class Config:
         orm_mode = True
@@ -48,6 +49,9 @@ class UserRegistration(BaseModel):
                 "email": "me@mydomain.com",
                 "full_name": "Thomas J. Daley, Esq.",
                 "password": "password",
+                "twilio_factor_id": "FAxxxxxxxxxxxxxxxxx",
+                "phone_number": "+12145550505",
+                "site_code": "FASxxxxxxxxxxxxxxxxxxxxxxxxx"
             }
         }
 
