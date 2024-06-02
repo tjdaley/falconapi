@@ -16,6 +16,7 @@ class User(BaseModel):
     version: Optional[str] = str(uuid4())
     id: str = Field(default='')
     twilio_factor_id: Optional[str] = ''
+    phone_number: Optional[str] = ''
 
     class Config:
         orm_mode = True
@@ -36,6 +37,8 @@ class UserRegistration(BaseModel):
     email: str
     full_name: str
     password: str
+    twilio_factor_id: Optional[str] = ''
+    phone_number: Optional[str] = ''
 
     class Config:
         orm_mode = True
