@@ -27,12 +27,6 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
-# Force an error if the site codes file is missing or otherwise unloadable
-try:
-    validate_site_code('x')
-except Exception as e:
-    print("Cannot open", SITE_CODES_FILE, str(e))
-
 # Class for responding to user registration
 class InsertException(BaseModel):
     """A class for responding to user registration errors"""
@@ -118,6 +112,27 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)) -
         User: The User object if the user is active, None otherwise.
     """
     return current_user
+
+@router.get(
+    '/lookup',
+    status_code=status.HTTP_200_OK,
+    response_model=User,
+    responses={404: {'model': LookupException, 'description': "User ID not found"}},
+    summary="Lookup a user by id"
+)
+async def get_user(user_id: str) -> User:
+    """
+    Lookup a user by user ID.
+
+    Args:
+        user_id (str): id from the users table.
+
+    Returns:
+        User record or error
+    """
+    user = USERS_TABLE.get_user_by_id(user_id)
+    result_user = User(user)
+    return result_user.json()
 
 @router.post(
     '/register',
