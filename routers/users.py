@@ -123,16 +123,19 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)) -
     responses={404: {'model': LookupException, 'description': "User ID not found"}},
     summary="Lookup a user by id"
 )
-async def get_user(user_id: str) -> User:
+async def get_user(user_id: str, site_code: str) -> User:
     """
     Lookup a user by user ID.
 
     Args:
         user_id (str): id from the users table.
+        site_code (str): Site's authorization code
 
     Returns:
         User record or error
     """
+    if not validate_site_code(user_registration.site_code):
+        raise HTTPException(status_code=403, detail="Unauthorized site for user retrieval")
     user: User = USERS_TABLE.get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User ID {user_id} not found.")
