@@ -14,7 +14,7 @@ class User(BaseModel):
     token: Optional[str] = None
     hashed_password: Optional[str] = None
     version: Optional[str] = str(uuid4())
-    id: str = Field(default='')
+    id: Optional[str] = ''
     twilio_factor_id: Optional[str] = ''
     phone_number: Optional[str] = ''
 
@@ -40,6 +40,7 @@ class UserRegistration(BaseModel):
     twilio_factor_id: Optional[str] = ''
     phone_number: Optional[str] = ''
     site_code: str
+    id: Optional[str] = str(uuid4())
 
     class Config:
         orm_mode = True
