@@ -46,10 +46,7 @@ def verify_password(plain_password, hashed_password) -> bool:
     Returns:
         bool: True if the passwords match, False otherwise.
     """
-    with open("logger.log", 'w') as log:
-        log.write(f"@@@ falconlib Verifying {plain_password} vs {hashed_password}")
-        match = pwd_context.verify(plain_password, hashed_password)
-        log.write(f"@@@ falconlib Match? {match}")
+    match = pwd_context.verify(plain_password, hashed_password)
     return match
 
 def get_password_hash(password) -> str:
@@ -76,7 +73,6 @@ def authenticate_user(username: str, password: str) -> User:
         User: The user object if the username and password match, None otherwise.
     """
     user = USERS_TABLE.get_user_by_username(username)
-    print(f"@@@ falconlib Authenticating {username} // {password}")
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -97,7 +93,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     Raises:
         HTTPException: If the username or password is invalid.
     """
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user(form_data.username.lower().strip(), form_data.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -173,14 +169,14 @@ async def register_user(user_registration: UserRegistration) -> RegistrationResp
         raise HTTPException(status_code=400, detail="User already exists")
     hashed_password = get_password_hash(user_registration.password)
     user = User(
-        username=user_registration.username,
-        email=user_registration.email,
-        full_name=user_registration.full_name,
+        username=user_registration.username.lower().strip(),
+        email=user_registration.email.lower().strip(),
+        full_name=user_registration.full_name.strip(),
         admin=False,
         disabled=False,
         hashed_password=hashed_password,
-        twilio_factor_id=user_registration.twilio_factor_id,
-        phone_number=user_registration.phone_number
+        twilio_factor_id=user_registration.twilio_factor_id.strip(),
+        phone_number=user_registration.phone_number.strip()
     )
     result = USERS_TABLE.create_user(user)
     return {
