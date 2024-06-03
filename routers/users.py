@@ -76,6 +76,7 @@ def authenticate_user(username: str, password: str) -> User:
         User: The user object if the username and password match, None otherwise.
     """
     user = USERS_TABLE.get_user_by_username(username)
+    print(f"@@@ falconlib Authenticating {username} // {password}")
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
