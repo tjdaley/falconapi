@@ -46,9 +46,10 @@ def verify_password(plain_password, hashed_password) -> bool:
     Returns:
         bool: True if the passwords match, False otherwise.
     """
-    print("@@@ falconlib Verifying", plain_password, "vs", hashed_password)
-    match = pwd_context.verify(plain_password, hashed_password)
-    print("@@@ falconlib Match?", match)
+    with open("logger.log", 'w") as log:
+        log.write(f"@@@ falconlib Verifying {plain_password} vs {hashed_password}")
+        match = pwd_context.verify(plain_password, hashed_password)
+        log.write(f"@@@ falconlib Match? {match}")
     return match
 
 def get_password_hash(password) -> str:
