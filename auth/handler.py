@@ -34,6 +34,7 @@ class Token(BaseModel):
     token_type: str
     user_id: str = Field(default='')  # the field name when serialized is 'user_id', db name is 'id'
     twilio_factor_id: str = Field(default='')
+    is_admin: bool = Field(default=False)
 
 
 class TokenData(BaseModel):
@@ -64,7 +65,9 @@ def create_access_token(user: User, expires_delta: timedelta = None) -> Dict[str
 
     payload = {
         "sub": user.username,
-        "exp": expire
+        "exp": expire,
+        "id": user.id,
+        "is_admin": user.admin,
     }
 
     token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
