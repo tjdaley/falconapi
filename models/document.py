@@ -36,7 +36,7 @@ class Document(BaseModel):
     sub_classification: Optional[dict]
     page_max: Optional[int]  # The highest Y of the Page X of Y patterns we found
     missing_pages: Optional[str]  # Comma separated list of missing page numbers
-    produced_date: Optional[Union[str, datetime]]
+    produced_date: Optional[Union[str, datetime]] = None
 
     class Config:
         orm_mode = True
