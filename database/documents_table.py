@@ -17,7 +17,7 @@ class DocumentsDict(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.documents = DocumentsTable()
-        self.logger = flogger.get_logger('falconapi/DocumentsDict')
+        self.logger = flogger('falconapi/DocumentsDict')
 
     def __getitem__(self, key):
         return self.documents.get_document(key)
@@ -97,7 +97,7 @@ class DocumentsTable(Database):
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
         self.xprops = self.conn[self.database]['extendedprops']
-        self.logger = flogger.get_logger('falconapi/DocumentsTable')
+        self.logger = flogger('falconapi/DocumentsTable')
 
     def get_document(self, id: str) -> Document:
         """
