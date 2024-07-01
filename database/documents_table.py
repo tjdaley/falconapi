@@ -6,7 +6,7 @@ from database.db import Database
 from models.document import Document
 from models.tracker import Tracker
 
-from falconlogger import flogger
+from falconlogger.flogger import FalconLogger
 
 COLLECTION = 'documents'
 
@@ -17,7 +17,7 @@ class DocumentsDict(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.documents = DocumentsTable()
-        self.logger = flogger('falconapi/DocumentsDict')
+        self.logger = FalconLogger('falconapi/DocumentsDict')
 
     def __getitem__(self, key):
         return self.documents.get_document(key)
@@ -97,7 +97,7 @@ class DocumentsTable(Database):
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
         self.xprops = self.conn[self.database]['extendedprops']
-        self.logger = flogger('falconapi/DocumentsTable')
+        self.logger = FalconLogger('falconapi/DocumentsTable')
 
     def get_document(self, id: str) -> Document:
         """
