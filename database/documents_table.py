@@ -128,7 +128,12 @@ class DocumentsTable(Database):
         set_clause = {}
         for field in fields:
             set_clause[field] = values[field]
-        return self.collection.update_one({'id': document.id}, {'$set': set_clause})
+        try:
+            self.logger.debug(f"Updating document {document.id} with {set_clause}")
+            return self.collection.update_one({'id': document.id}, {'$set': set_clause})
+        except Exception as e:
+            self.logger.error(f"Error updating document {document.id}: {e}")
+        return {}
 
     def delete_document(self, id: str) -> dict:
         """
