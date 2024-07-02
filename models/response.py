@@ -25,6 +25,7 @@ class ResponseAndId(BaseModel):
     """
     message: str
     id: Optional[str]
+    version: Optional[str]
 
     class Config:
         orm_mode = True

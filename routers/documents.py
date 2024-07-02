@@ -43,7 +43,7 @@ async def add_document(doc: Document, user: User = Depends(get_current_active_us
     doc.added_date = datetime.now()
     doc.version = str(uuid4())
     documents[doc.id] = doc
-    return {'message': "Document added", 'id': doc.id}
+    return {'message': "Document added", 'id': doc.id, 'version': doc.version}
 
 
 # Add extended document properties
@@ -202,7 +202,7 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
         updated_doc.sub_classification = doc.sub_classification
     documents[doc.id] = updated_doc
 
-    return {'message': "Document updated", 'id': doc.id}
+    return {'message': "Document updated", 'id': doc.id, 'version': updated_doc.version}
 
 
 # Update extended document properties
