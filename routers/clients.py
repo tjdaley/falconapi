@@ -34,11 +34,16 @@ async def get_clients(search_field: str, search_value: str, current_user: User =
     Return client's information.
 
     Args:
-        id (str): The client's ID. Set to '*' to get all clients.
+        search_field (str): The field to search within ['id', 'billing_number'].
+        search_value (str): The value to search for. If searching by 'id', set to '*' to get all clients.
+        current_user (User): The current user.
 
     Returns:
         Client: The Client object if the user is active, None otherwise.
     """
+    valid_search_fields = ['id', 'billing_number']
+    if search_field not in valid_search_fields:
+        raise HTTPException(status_code=400, detail=f"Invalid search field {search_field}. Valid search fields are {valid_search_fields}")
     args = {
         search_field: search_value,
         'username': current_user.email
@@ -68,10 +73,10 @@ async def register_client(client: Client, current_user: User = Depends(get_curre
             HTTPException: If the client already exists.
     """
     user_email = current_user.email
-    xclient: Client = CLIENTS_TABLE.get_clients(client.billing_number, username=user_email)
+    xclient: Client = CLIENTS_TABLE.get_clients(search_field='billing_number', search_value=client.billing_number, username=user_email)
     if xclient:
         raise HTTPException(status_code=400, detail=f"Client already exists (billing number {client.billing_number})")
-    xclient: Client = CLIENTS_TABLE.get_client(client.id, username=user_email)
+    xclient: Client = CLIENTS_TABLE.get_clients(search_field='id', search_value=client.id, username=user_email)
     if xclient:
         raise HTTPException(status_code=400, detail=f"Client already exists (id {client.id})")
 
