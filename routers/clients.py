@@ -137,8 +137,8 @@ async def delete_client(id: str, current_user: User = Depends(get_current_active
     """
     result: UpdateResult = CLIENTS_TABLE.delete_client(id, current_user.email)
     if result.modified_count == 0:  # We don't delete, we just update the enabled flag
-        raise HTTPException(status_code=400, detail=f"Client {id} not deleted")
-    return {"message": "Client deleted successfully", "status": "success"}
+        return {"message": "Client not deleted", "success": False}
+    return {"message": "Client deleted successfully", "success": True}
 
 @router.put(
     '/{id}/add_authorized_user',
@@ -158,8 +158,8 @@ async def add_authorized_user(id: str, authorized_user: str, current_user: User 
     """
     result: UpdateResult = CLIENTS_TABLE.add_authorized_user(id, current_user.email, authorized_user)
     if result.modified_count == 0:
-        raise HTTPException(status_code=400, detail=f"User {authorized_user} not added to client {id}")
-    return {"message": f"User {authorized_user} added to client {id}", "status": "success"}
+        return {"message": f"User {authorized_user} not added to client {id}", "success": False}
+    return {"message": f"User {authorized_user} added to client {id}", "success": True}
 
 @router.put(
     '/{id}/remove_authorized_user',
@@ -179,5 +179,5 @@ async def remove_authorized_user(id: str, authorized_user: str, current_user: Us
     """
     result: UpdateResult = CLIENTS_TABLE.remove_authorized_user(id, current_user.email, authorized_user)
     if result.modified_count == 0:
-        raise HTTPException(status_code=400, detail=f"User {authorized_user} not removed from client {id}")
-    return {"message": f"User {authorized_user} removed from client {id}", "status": "success"}
+        return {"message": f"User {authorized_user} not removed from client {id}", "success": False}
+    return {"message": f"User {authorized_user} removed from client {id}", "success": True}
