@@ -116,7 +116,7 @@ class ClientsTable(Database):
         return self.collection.update_one(
             {'id': id, 'created_by': username},
             [
-                {'$push': {'authorized_users': authorized_user.lower()}},
+                {'$addToSet': {'authorized_users': authorized_user.lower()}},
                 {'$set': {'version': str(uuid4())}}
             ]
         )
