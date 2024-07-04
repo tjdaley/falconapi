@@ -31,14 +31,14 @@ class ClientsTable(Database):
         super().__init__()
         self.collection = self.conn[self.database][COLLECTION]
 
-    def get_clients(self, id: str = None, billing_number: str = None, username: str = None) -> List[Client]:
+    def get_clients(self, client_id: str = None, billing_number: str = None, username: str = None) -> List[Client]:
         """
         Get clients from the database.
 
         Must specify either id or billing_id, and username.
 
         Args:
-            id (str): The client's ID. Use '*' to get all clients.
+            client_id (str): The client's ID. Use '*' to get all clients.
             billing_number (str): The client's billing number.
             username (str): The user's username.
 
@@ -50,8 +50,8 @@ class ClientsTable(Database):
         if not username:
             raise MissingUsernameException()
         query = {}
-        if id and id != '*':
-            query['id'] = id
+        if client_id and client_id != '*':
+            query['id'] = client_id
         if billing_number:
             query['billing_number'] = billing_number
         query['$or'] = [{'created_by': username}, {'authorized_users': username.lower()}]
@@ -102,12 +102,12 @@ class ClientsTable(Database):
             }
         )
     
-    def add_authorized_user(self, id: str, username: str, authorized_user: str) -> dict:
+    def add_authorized_user(self, client_id: str, username: str, authorized_user: str) -> dict:
         """
         Add an authorized user to a client.
 
         Args:
-            id (str): The client's ID.
+            client_id (str): The client's ID.
             username (str): The user's username.
             authorized_user (str): The authorized user's username.
 
@@ -116,7 +116,7 @@ class ClientsTable(Database):
         """
         # First update: Add to authorized_users
         result = self.collection.update_one(
-            {'id': id, 'created_by': username},
+            {'id': client_id, 'created_by': username},
             {'$addToSet': {'authorized_users': authorized_user.lower()}}
         )
 
@@ -128,7 +128,7 @@ class ClientsTable(Database):
         # Second update: Update the version
         if result.modified_count > 0:
             self.collection.update_one(
-                {'id': id, 'created_by': username},
+                {'id': client_id, 'created_by': username},
                 {'$set': {'version': str(uuid4())}}
             )
 
@@ -150,7 +150,7 @@ class ClientsTable(Database):
         """
         # First update: Add to authorized_users
         result = self.collection.update_one(
-            {'id': id, 'created_by': username},
+            {'id': client_id, 'created_by': username},
             {'$pull': {'authorized_users': authorized_user.lower()}}
         )
         
@@ -162,26 +162,26 @@ class ClientsTable(Database):
         # Second update: Update the version
         if result.modified_count > 0:
             self.collection.update_one(
-                {'id': id, 'created_by': username},
+                {'id': client_id, 'created_by': username},
                 {'$set': {'version': str(uuid4())}}
             )
 
         return result
 
-    def delete_client(self, id: str, username: str) -> dict:
+    def delete_client(self, client_id: str, username: str) -> dict:
         """
         Delete a client from the database
 
         Only the user who created the client can delete it.
 
         Args:
-            id (str): The client's ID.
+            client_id (str): The client's ID.
             username (str): The user's username.
 
         Returns:
             dict: The result of the delete operation.
         """
         return self.collection.update_one(
-            {'id': id, 'created_by': username},
+            {'id': client_id, 'created_by': username},
             {'$set': {'enabled': False}}
         )
