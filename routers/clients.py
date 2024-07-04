@@ -85,6 +85,7 @@ async def register_client(client: Client, current_user: User = Depends(get_curre
         billing_number=client.billing_number,
         created_by=user_email,
         enabled=True,
+        authorized_users=[user_email] + client.authorized_users
     )
     result = CLIENTS_TABLE.create_client(new_client)
     return {

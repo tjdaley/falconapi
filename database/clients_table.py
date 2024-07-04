@@ -53,7 +53,7 @@ class ClientsTable(Database):
             query['id'] = id
         if billing_number:
             query['billing_number'] = billing_number
-        query['$or'] = [{'created_by': username}, {'authorized_users': username}]
+        query['$or'] = [{'created_by': username}, {'authorized_users': username.lower()}]
         client_docs = self.collection.find(query)
         return [Client(**client_doc) for client_doc in client_docs]
 
@@ -68,6 +68,8 @@ class ClientsTable(Database):
             raise Exception(f"Client {client.billing_number} already exists")
         if client.created_by not in client.authorized_users:
             client.authorized_users.append(client.created_by)
+
+        client.authorized_users = [au.lower() for au in client.authorized_users]
         return self.collection.insert_one(client.model_dump())
 
     def update_client(self, client: Client, username: str) -> dict:
@@ -114,7 +116,7 @@ class ClientsTable(Database):
         return self.collection.update_one(
             {'id': id, 'created_by': username},
             [
-                {'$push': {'authorized_users': authorized_user}},
+                {'$push': {'authorized_users': authorized_user.lower()}},
                 {'$set': {'version': str(uuid4())}}
             ]
         )
@@ -136,7 +138,7 @@ class ClientsTable(Database):
         return self.collection.update_one(
             {'id': client_id, 'created_by': username},
             [
-                {'$pull': {'authorized_users': authorized_user}},
+                {'$pull': {'authorized_users': authorized_user.lower()}},
                 {'$set': {'version': str(uuid4())}}
             ]
         )
