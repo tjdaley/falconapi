@@ -5,6 +5,7 @@ from typing import List
 from uuid import uuid4
 from database.db import Database
 from models.client import Client
+from pymongo.results import InsertOneResult, UpdateResult  # NOQA
 
 COLLECTION = 'clients'
 
@@ -103,7 +104,7 @@ class ClientsTable(Database):
     
     def add_authorized_user(self, id: str, username: str, authorized_user: str) -> dict:
         """
-        Add an authorized user to a client
+        Add an authorized user to a client.
 
         Args:
             id (str): The client's ID.
@@ -113,13 +114,25 @@ class ClientsTable(Database):
         Returns:
             dict: The result of the update operation.
         """
-        return self.collection.update_one(
+        # First update: Add to authorized_users
+        result = self.collection.update_one(
             {'id': id, 'created_by': username},
-            {
-                '$addToSet': {'authorized_users': authorized_user.lower()},
-                '$set': {'version': str(uuid4())}
-            }
+            {'$addToSet': {'authorized_users': authorized_user.lower()}}
         )
+
+        # NOTE: We the update is broken into two parts to ensure the version is only
+        # updated if the authorized_users field is updated. If we combined the two
+        # updates into one, the version would be updated even if the authorized_users
+        # field was not updated.
+        
+        # Second update: Update the version
+        if result.modified_count > 0:
+            self.collection.update_one(
+                {'id': id, 'created_by': username},
+                {'$set': {'version': str(uuid4())}}
+            )
+
+        return result
     
     def remove_authorized_user(self, client_id: str, username: str, authorized_user: str) -> dict:
         """
@@ -135,13 +148,25 @@ class ClientsTable(Database):
         Returns:
             dict: The result of the update operation.
         """
-        return self.collection.update_one(
-            {'id': client_id, 'created_by': username},
-            [
-                {'$pull': {'authorized_users': authorized_user.lower()}},
-                {'$set': {'version': str(uuid4())}}
-            ]
+        # First update: Add to authorized_users
+        result = self.collection.update_one(
+            {'id': id, 'created_by': username},
+            {'$pull': {'authorized_users': authorized_user.lower()}}
         )
+        
+        # NOTE: We the update is broken into two parts to ensure the version is only
+        # updated if the authorized_users field is updated. If we combined the two
+        # updates into one, the version would be updated even if the authorized_users
+        # field was not updated.
+        
+        # Second update: Update the version
+        if result.modified_count > 0:
+            self.collection.update_one(
+                {'id': id, 'created_by': username},
+                {'$set': {'version': str(uuid4())}}
+            )
+
+        return result
 
     def delete_client(self, id: str, username: str) -> dict:
         """
