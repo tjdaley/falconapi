@@ -61,7 +61,7 @@ class ClientsTable(Database):
         """
         Create a client in the database
         """
-        existing_client = self.get_client_by_billing_number(client.billing_number, client.created_by)
+        existing_client = self.get_clients(billing_number=client.billing_number, username=client.created_by)
         if existing_client:
             if self.fail_silent:
                 return self.insert_one_result(client.name)
