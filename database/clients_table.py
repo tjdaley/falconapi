@@ -115,10 +115,10 @@ class ClientsTable(Database):
         """
         return self.collection.update_one(
             {'id': id, 'created_by': username},
-            [
-                {'$addToSet': {'authorized_users': authorized_user.lower()}},
-                {'$set': {'version': str(uuid4())}}
-            ]
+            {
+                '$addToSet': {'authorized_users': authorized_user.lower()},
+                '$set': {'version': str(uuid4())}
+            }
         )
     
     def remove_authorized_user(self, client_id: str, username: str, authorized_user: str) -> dict:
