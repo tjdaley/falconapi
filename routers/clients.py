@@ -136,7 +136,7 @@ async def delete_client(id: str, current_user: User = Depends(get_current_active
         dict: A message indicating the client was deleted.
     """
     result: UpdateResult = CLIENTS_TABLE.delete_client(id, current_user.email)
-    if result.deleted_count == 0:
+    if result.modified_count == 0:  # We don't delete, we just update the enabled flag
         raise HTTPException(status_code=400, detail=f"Client {id} not deleted")
     return {"message": "Client deleted successfully", "status": "success"}
 
