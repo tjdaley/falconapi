@@ -3,16 +3,20 @@ trackers_table.py - Trackers Table
 """
 from collections import defaultdict
 import calendar
+from datetime import datetime
 from typing import List
+from uuid import uuid4
 
 from database.db import Database
 from models.tracker import Tracker
 from models.document import Document
 from database.documents_table import DocumentsDict
 from models.tracker import TrackerDatasetResponse
+from database.clients_table import ClientsTable
 from doc_classifier.openai_prompt_data import PromptData
 
 COLLECTION = 'trackers'
+CLIENTS_DB = ClientsTable()
 
 class TrackersDict(dict):
     """
@@ -109,6 +113,22 @@ class TrackersDict(dict):
         Get all trackers for a username
         """
         return self.trackers.get_trackers_by_username(username)
+
+class DuplicateTrackerError(Exception):
+    """
+    Exception for when a tracker already exists
+    """
+    def __init__(self, tracker_id: str):
+        self.message = f"Tracker {tracker_id} already exists"
+        super().__init__(self.message)
+
+class UnauthorizedUserError(Exception):
+    """
+    Exception for when a user is not authorized to create a tracker
+    """
+    def __init__(self, username: str, client_reference: str):
+        self.message = f"User {username} is not authorized to create trackers for client {client_reference}"
+        super().__init__(self.message)
     
 class TrackersTable(Database):
     """
@@ -122,92 +142,189 @@ class TrackersTable(Database):
         self.collection = self.conn[self.database][COLLECTION]
         self.documents = self.conn[self.database]['documents']
 
-    def get_tracker(self, id: str) -> Tracker:
+    def get(self, tracker_id: str, username: str) -> Tracker:
         """
         Get a tracker from the database
-        """
-        tracker_doc = self.collection.find_one({'id': id})
-        return Tracker(**tracker_doc) if tracker_doc else None
 
-    def get_tracker_by_id(self, id: str) -> Tracker:
-        """
-        Get a tracker from the database
-        """
-        tracker_doc = self.collection.find_one({'id': id})
-        return Tracker(**tracker_doc) if tracker_doc else None
+        Args:
+            tracker_id (str): The tracker's ID.
+            username (str): The user's username.
 
-    def create_tracker(self, tracker: Tracker) -> dict:
+        Returns:
+            Tracker: The Tracker object if it exists, None otherwise.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
+        """
+        tracker_doc = self.collection.find_one({'id': tracker_id})
+        tracker = Tracker(**tracker_doc) if tracker_doc else None
+        if not tracker:
+            return None
+
+        # See if this user is authorized to create trackers for this client.
+        # If not, raise an exception.
+        if not CLIENTS_DB.is_authorized(tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
+        return tracker
+
+    def create(self, tracker: Tracker, username: str) -> dict:
         """
         Create a tracker in the database
+
+        Args:
+            tracker (Tracker): The tracker object to create.
+            username (str): The user's username.
+
+        Returns:
+            dict: The result of the insert operation.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to create a tracker.
         """
+        # See if this user is authorized to create trackers for this client.
+        # If not, raise an exception.
+        if not CLIENTS_DB.is_authorized(tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         existing_tracker = self.get_tracker_by_id(tracker.id)
         if existing_tracker:
             if self.fail_silent:
                 return self.insert_one_result(tracker.id)
-            raise Exception(f"Tracker {tracker.id} already exists")
-        print(f"Creating tracker {tracker.id}")
-        return self.collection.insert_one(tracker.dict())
+            raise DuplicateTrackerError(tracker.id)
+        
+        return self.collection.insert_one(tracker.model_dump())
 
-    def update_tracker(self, tracker: Tracker) -> dict:
+    def update(self, tracker: Tracker, username: str) -> dict:
         """
         Update a tracker in the database
+
+        Args:
+            tracker (Tracker): The tracker object to update.
+            username (str): The user's username.
+
+        Returns:
+            dict: The result of the update operation.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to update the tracker.
         """
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
 
         # Update the tracker in the database
-        if 'documents' in tracker.dict():
+        if 'documents' in tracker.model_dump():
             return self.collection.update_one(
                 {'id': tracker.id},
                 {'$set': {
                     'name': tracker.name,
-                    'client_reference': tracker.client_reference,
+                    'bates_pattern': tracker.bates_pattern,
                     'documents': tracker.documents,
-                    'added_username': tracker.added_username,
-                    'added_date': tracker.added_date,
-                    'updated_username': tracker.updated_username,
-                    'updated_date': tracker.updated_date,
-                    'auth_usernames': tracker.auth_usernames,
+                    'updated_username': username,
+                    'updated_date': datetime.now(),
+                    'version': str(uuid4())
                     }
                 }
             )
 
-        # If a client app invokes the update path, the Tracker object will not have the documents field.
+        # If a client app invokes the update path, the Tracker object may not have the documents field.
         return self.collection.update_one(
             {'id': tracker.id},
             {'$set': {
                 'name': tracker.name,
-                'client_reference': tracker.client_reference,
-                'added_username': tracker.added_username,
-                'added_date': tracker.added_date,
-                'updated_username': tracker.updated_username,
-                'updated_date': tracker.updated_date,
-                'auth_usernames': tracker.auth_usernames,
+                'bates_pattern': tracker.bates_pattern,
+                'updated_username': username,
+                'updated_date': datetime.now(),
+                'version': str(uuid4())
                 }
             }
         )
 
-    def delete_tracker(self, id: str) -> dict:
+    def delete(self, tracker_id: str, username: str) -> dict:
         """
         Delete a tracker from the database
+
+        Args:
+            tracker_id (str): The tracker's ID.
+            username (str): The user's username.
+
+        Returns:
+            dict: The result of the delete operation.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to delete the tracker.
         """
-        return self.collection.delete_one({'id': id})
+        tracker: Tracker = self.get_tracker(tracker_id, username)
+        if not tracker:
+            return {'deleted_count': 0}
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+        
+        if tracker.added_username != username:
+            raise UnauthorizedUserError(username, tracker.client_id)
+
+        return self.collection.delete_one({'id': tracker_id})
 
     def get_all_trackers(self) -> list:
         """
         Get all trackers from the database
+
+        Returns:
+            list: A list of all trackers in the database.
         """
         return list(self.collection.find())
 
     def get_trackers_by_username(self, username: str) -> List[Tracker]:
         """
         Get all trackers for a username
+
+        Args:
+            username (str): The user's username.
+
+        Returns:
+            List[Tracker]: A list of all trackers for the user.
         """
-        tracker_docs = self.collection.find({'auth_usernames': username})
-        return [Tracker(**tracker_doc) for tracker_doc in tracker_docs]
+        clients = CLIENTS_DB.get_clients(client_id='*', username=username)
+        all_trackers = []
+        for client in clients:
+            client_id = client['id']
+            trackers = self.collection.find({'client_reference': client_id})
+            all_trackers.extend([Tracker(**tracker) for tracker in trackers])
+        return [Tracker(**tracker_doc) for tracker_doc in all_trackers]
+    
+    def get_trackers_by_client_id(self, client_id: str, username: str) -> List[Tracker]:
+        """
+        Get all trackers for a client ID
+
+        Args:
+            client_id (str): The client's ID.
+            username (str): The user's username.
+
+        Returns:
+            List[Tracker]: A list of all trackers for the client.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the trackers.
+        """
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(client_id, username):
+            raise UnauthorizedUserError(username, client_id)
+        trackers = self.collection.find({'client_id': client_id})
+        return [Tracker(**tracker) for tracker in trackers]
 
     # See if a document is in a tracker
     def is_in_tracker(self, tracker_id: str, document_id: str) -> bool:
         """
         Check if a document is in a tracker
+
+        Args:
+            tracker_id (str): The tracker's ID.
+            document_id (str): The document's ID.
+
+        Returns:
+            bool: True if the document is in the tracker, False otherwise.
         """
         tracker = self.get_tracker_by_id(tracker_id)
         return document_id in tracker.documents if tracker else False
@@ -215,12 +332,24 @@ class TrackersTable(Database):
     def get_trackers_linked_to_doc(self, doc_id: str) -> list:
         """
         Get all trackers linked to a document
+
+        Args:
+            doc_id (str): The document's ID.
+
+        Returns:
+            list: A list of all trackers linked to the document.
         """
         return list(self.collection.find({'documents': doc_id}))
     
     def delete_document_from_trackers(self, doc_id: str) -> None:
         """
         Delete a document from all trackers
+
+        Args:
+            doc_id (str): The document's ID.
+
+        Returns:
+            dict: The result of the delete operation.
         """
         trackers = self.get_trackers_linked_to_doc(doc_id)
 
@@ -229,40 +358,90 @@ class TrackersTable(Database):
         
         return {'trackers': len(trackers)}
 
-    def link_doc(self, tracker: Tracker, document: Document) -> bool:
+    def link_doc(self, tracker: Tracker, document: Document, username: str) -> bool:
         """
         Link a document to a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            document (Document): The document object.
+            username (str): The user's username.
+
+        Returns:
+            bool: True if the document was linked to the tracker, False otherwise.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to update the tracker.
         """
-        existing_tracker = self.get_tracker_by_id(tracker.id)
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return False
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, existing_tracker.client_id)
+
         if document.id in existing_tracker.documents:
             if self.fail_silent:
-                return self.update_one_result()
+                return True
             raise Exception(f"Document {document.id} is already in tracker {tracker.id}")
         existing_tracker.documents.append(document.id)
-        return self.update_tracker(existing_tracker)
+        try:
+            self.update_tracker(existing_tracker, username)
+        except Exception as e:
+            return False
+        return True
 
-    def unlink_doc(self, tracker: Tracker, document_id: str) -> bool:
+    def unlink_doc(self, tracker: Tracker, document_id: str, username: str) -> bool:
         """
         Unlink a document from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            document_id (str): The document's ID.
+            username (str): The user's username.
+
+        Returns:
+            bool: True if the document was unlinked from the tracker, False otherwise.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to update the tracker.        
         """
-        existing_tracker = self.get_tracker_by_id(tracker.id)
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return False
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, existing_tracker.client_id)
         if document_id not in existing_tracker.documents:
             if self.fail_silent:
-                return self.update_one_result()
+                return True
             raise Exception(f"Document {document_id} is not in tracker {tracker.id}")
         existing_tracker.documents.remove(document_id)
-        return self.update_tracker(existing_tracker)
+        try:
+            self.update_tracker(existing_tracker, username)
+        except Exception as e:
+            return False
+        return True
     
-    def get_count(self) -> int:
-        """
-        Get the number of trackers in the database
-        """
-        return self.collection.count_documents({})
-    
-    def get_compliance_matrix(self, tracker: Tracker, classification: str) -> dict:
+    def get_compliance_matrix(self, tracker: Tracker, classification: str, username: str) -> dict:
         """
         Get a compliance matrix for a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            classification (str): The classification to get the matrix for.
+            username (str): The user's username.
+
+        Returns:
+            dict: The compliance matrix for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        # See if this user is authorized to update this tracker.
+        if not CLIENTS_DB.is_authorized(tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         prompt_data = PromptData()
         classifications = prompt_data.compliance_classifications()
         class_matrix = {}
@@ -328,9 +507,20 @@ class TrackersTable(Database):
                 class_matrix[classification] = final_data
         return class_matrix
 
-    def get_dataset(self, tracker: Tracker, dataset_name: str) -> TrackerDatasetResponse:
+    def get_dataset(self, tracker: Tracker, dataset_name: str, username: str) -> TrackerDatasetResponse:
         """
         Get a dataset from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            dataset_name (str): The name of the dataset to get.
+            username (str): The user's username.
+
+        Returns:
+            TrackerDatasetResponse: The dataset response object.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
         dataset_methods = {
             'TRANSFERS': self.get_transfers,
@@ -344,23 +534,60 @@ class TrackersTable(Database):
             #'MISSING_PAGES': self.get_missing_pages
         }
 
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=[])
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         if dataset_name not in dataset_methods:
             return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=[])
         
         dataset: list = list(dataset_methods[dataset_name](tracker))
         return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=dataset)
     
-    def get_documents_for_tracker(self, tracker: Tracker) -> list[dict]:
+    def get_documents_for_tracker(self, tracker: Tracker, username: str) -> list[dict]:
         """
         Get TRACKER_LIST dataset from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            username (str): The user's username.
+
+        Returns:
+            list[dict]: A list of documents for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return []
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
         docs = list(self.documents.find({'id':{'$in': tracker.documents}}, {'_id': 0}))
         return docs
     
-    def get_deposits(self, tracker: Tracker) -> list[dict]:
+    def get_deposits(self, tracker: Tracker, username: str) -> list[dict]:
         """
         Get DEPOSITS dataset from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            username (str): The user's username.
+
+        Returns:
+            list[dict]: A list of deposits for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return []
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         initial_element_match = {
             "$match": {
                 "id": {"$in": tracker.documents},
@@ -386,10 +613,26 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_cash_back_purchases(self, tracker: Tracker) -> list[dict]:
+    def get_cash_back_purchases(self, tracker: Tracker, username: str) -> list[dict]:
         """
         Get CASH_BACK_PURCHASES dataset from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            username (str): The user's username.
+
+        Returns:
+            list[dict]: A list of cash back purchases for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return []
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         initial_element_match = {
             "$match": {
                 "id": {"$in": tracker.documents},
@@ -415,10 +658,26 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
     
-    def get_transfers(self, tracker: Tracker) -> list[dict]:
+    def get_transfers(self, tracker: Tracker, username: str) -> list[dict]:
         """
         Get TRANSFERS dataset from a tracker
+
+        Args:
+            tracker (Tracker): The tracker object.
+            username (str): The user's username.
+
+        Returns:
+            list[dict]: A list of transfers for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        if not existing_tracker:
+            return []
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, tracker.client_id)
+
         initial_element_match = {
             "$match": {
                 "id": {"$in": tracker.documents},
@@ -452,10 +711,27 @@ class TrackersTable(Database):
 
         return self.get_filtered_transactions(initial_element_match, unwound_element_match)
 
-    def get_filtered_transactions(self, initial_element_match, unwound_element_match) -> list[dict]:
+    def get_filtered_transactions(self, initial_element_match: dict, unwound_element_match: dict, tracker_id: str, username: str) -> list[dict]:
         """
         Get TRANSFERS dataset from a tracker
+
+        Args:
+            initial_element_match (dict): The initial match for the aggregation pipeline.
+            unwound_element_match (dict): The unwound match for the aggregation pipeline.
+            tracker_id (str): The tracker's ID.
+            username (str): The user's username.
+
+        Returns:
+            list[dict]: A list of transfers for the tracker.
+
+        Raises:
+            UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
+        existing_tracker: Tracker = self.get_tracker(tracker_id, username)
+        if not existing_tracker:
+            return []
+        if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
+            raise UnauthorizedUserError(username, existing_tracker.client_id)
 
         extendedprops_collection = self.conn[self.database]['extendedprops']
 

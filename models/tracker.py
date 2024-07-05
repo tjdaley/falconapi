@@ -26,6 +26,7 @@ class Tracker(BaseModel):
 	id: Optional[str] = str(uuid4())
 	name: str
 	client_reference: Optional[str]
+	client_id: str
 	bates_pattern: Optional[str]
 	documents: Optional[List[str]] = []  # List of document paths for this tracker.
 	added_username: Optional[str]
@@ -39,10 +40,8 @@ class Tracker(BaseModel):
 		orm_mode = True
 		schema_extra = {
 			"example": {
-				"id": "tracker-1",
 				"name": "Client 20304 - Our Production",
-				"username": "my@email.com",
-				"client_reference": "DALTHO01A",
+				"client_id": "asdf-asdf-asdf-asdf",
 				"bates_pattern": "TJD \\d{6}",
 			}
 		}
@@ -55,14 +54,7 @@ class TrackerUpdate(BaseModel):
 	"""
 	id: str
 	name: Optional[str]
-	username: Optional[str]
-	client_reference: Optional[str]
 	bates_pattern: Optional[str]
-	added_username: Optional[str]
-	added_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
-	updated_username: Optional[str]
-	updated_date: Optional[datetime] = Field(default_factory=datetime.utcnow)
-	auth_usernames: Optional[List[str]] = [] # List of usernames that can access this tracker.
 	version: Optional[str] = str(uuid4())
 
 	class Config:

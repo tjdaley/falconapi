@@ -57,6 +57,22 @@ class ClientsTable(Database):
         query['$or'] = [{'created_by': username}, {'authorized_users': username.lower()}]
         client_docs = self.collection.find(query)
         return [Client(**client_doc) for client_doc in client_docs]
+    
+    def is_authorized(self, client_id: str, username: str) -> bool:
+        """
+        Check if a user is authorized to access a client.
+
+        Args:
+            client_id (str): The client's ID.
+            username (str): The user's username.
+
+        Returns:
+            bool: True if the user is authorized, False otherwise.
+        """
+        client = self.collection.find_one({'id': client_id})
+        if not client:
+            return False
+        return username.lower() in client['authorized_users']
 
     def create_client(self, client: Client) -> dict:
         """
