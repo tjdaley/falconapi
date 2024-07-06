@@ -292,15 +292,12 @@ class TrackersTable(Database):
         for client in clients:
             trackers = self.collection.find({'client_id': client.id})
             print(f"@@@@@ Found tracker for client {client.id}")
-            for tracker in trackers:
-                print(f"--------@@@@@ Found tracker {tracker['id']} for client {client.id}")
-                z = Tracker(**tracker)
-                print(f"--------@@@@@ Tracker: {z}")
             all_trackers.extend([Tracker(**tracker) for tracker in trackers])
+            print(f"@@@@@ all_trackers now has {len(all_trackers)} trackers for user {username}")
         print(f"@@@@@ Found {len(all_trackers)} trackers for user {username}")
         trackers = [Tracker(**tracker_doc) for tracker_doc in all_trackers]
         print(f"@@@@@ Returning {len(trackers)} trackers for user {username}")
-        return trackers
+        return all_trackers
     
     def get_trackers_by_client_id(self, client_id: str, username: str) -> List[Tracker]:
         """
