@@ -12,8 +12,8 @@ class Response(BaseModel):
     message: str
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "message": "Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version 1.0.0"
             }
@@ -28,8 +28,8 @@ class ResponseAndId(BaseModel):
     version: Optional[str]
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "message": "Document added",
                 "id": "2876ce60-0f93-4548-8c2f-ac1014dd8697"

@@ -39,8 +39,8 @@ class Document(BaseModel):
     produced_date: Optional[Union[str, datetime]] = ''
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "doc-1",
                 "path": "C:\\Users\\my\\Documents\\Client 20304 - Our Production\\20304-OurProduction.pdf",
@@ -126,8 +126,8 @@ class ExtendedDocumentProperties(BaseModel):
         return values
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "doc-1",
                 "images": [],
@@ -165,8 +165,8 @@ class DocumentObjTables(BaseModel):
     version: Optional[str] = str(uuid4())
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "doc-1",
                 "tables": {
@@ -186,7 +186,7 @@ class CategorySubcategoryResponse(BaseModel):
     count: Optional[int] = 0
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "category": "category1",
                 "subcategory": "subcategory1",
@@ -205,7 +205,7 @@ class DocumentClassificationStatus(BaseModel):
     classification: Optional[dict]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "task_id": "60a5c7d4b8a8e1f0f1c1b5d1 OR None if called synchronously",
                 "document_id": "e7e4fb7c-4d54-44b6-88d6-50509ff677cc",

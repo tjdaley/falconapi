@@ -15,8 +15,8 @@ class Client(BaseModel):
     version: Optional[str] = str(uuid4())
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "asdflk7jksd234fjk",
                 "name": "Daley, Thomas J.",
@@ -34,8 +34,8 @@ class Clients(BaseModel):
     clients: list[Client]
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "clients": [
                     {

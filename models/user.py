@@ -19,8 +19,8 @@ class User(BaseModel):
     phone_number: Optional[str] = ''
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "username": "me@mydomain.com",
                 "email": "me@mydomain.com",
@@ -43,8 +43,8 @@ class UserRegistration(BaseModel):
     id: Optional[str] = str(uuid4())
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "username": "me@mydomain.com",
                 "email": "me@mydomain.com",
@@ -63,8 +63,8 @@ class RegistrationResponse(BaseModel):
     user_id: str
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "username": "me@mydomain.com",
                 "message": "User created successfully",

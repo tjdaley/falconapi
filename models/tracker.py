@@ -37,8 +37,8 @@ class Tracker(BaseModel):
 	version: Optional[str] = str(uuid4())
 
 	class Config:
-		orm_mode = True
-		schema_extra = {
+		from_attributes = True
+		json_schema_extra = {
 			"example": {
 				"name": "Client 20304 - Our Production",
 				"client_id": "asdf-asdf-asdf-asdf",
@@ -58,8 +58,8 @@ class TrackerUpdate(BaseModel):
 	version: Optional[str] = str(uuid4())
 
 	class Config:
-		orm_mode = True
-		schema_extra = {
+		from_attributes = True
+		json_schema_extra = {
 			"example": {
 				"id": "tracker-1",
 				"name": "New Tracker Name",
@@ -74,8 +74,8 @@ class TrackerDatasetRequest(BaseModel):
 	dataset_name: str
 
 	class Config:
-		orm_mode = True
-		schema_extra = {
+		from_attributes = True
+		json_schema_extra = {
 			"example": {
 				"id": "tracker-1",
 				"dataset_name": "TRANSFERS",
@@ -98,8 +98,8 @@ class TrackerDatasetResponse(BaseModel):
 	data: List[dict]
 
 	class Config:
-		orm_mode = True
-		schema_extra = {
+		from_attributes = True
+		json_schema_extra = {
 			"example": {
 				"id": "tracker-1",
 				"dataset_name": "TRANSFERS",

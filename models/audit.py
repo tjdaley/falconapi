@@ -23,8 +23,8 @@ class Audit(BaseModel):
     message: Optional[str] = None
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "audit-1",
                 "username": "test_user@test.com",

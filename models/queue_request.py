@@ -15,8 +15,8 @@ class QueueRequest(BaseModel):
     ttl: Optional[int] = 4
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "request_id": "gjdf894nfkbjf8943hjn:2024040100000000",
                 "task": "classify",
