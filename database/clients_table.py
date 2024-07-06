@@ -35,7 +35,8 @@ class ClientsTable(Database):
         """
         Get clients from the database.
 
-        Must specify either id or billing_id, and username.
+        Must specify either id or billing_id, and username. If you specify both id and billing_id,
+        only id will be used.
 
         Args:
             client_id (str): The client's ID. Use '*' to get all clients.
@@ -52,7 +53,7 @@ class ClientsTable(Database):
         query = {}
         if client_id and client_id != '*':
             query['id'] = client_id
-        if billing_number:
+        if billing_number and not client_id:
             query['billing_number'] = billing_number
         query['$or'] = [{'created_by': username}, {'authorized_users': username.lower()}]
         client_docs = self.collection.find(query)
