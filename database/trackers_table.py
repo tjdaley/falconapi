@@ -295,8 +295,6 @@ class TrackersTable(Database):
             all_trackers.extend([Tracker(**tracker) for tracker in trackers])
             print(f"@@@@@ all_trackers now has {len(all_trackers)} trackers for user {username}")
         print(f"@@@@@ Found {len(all_trackers)} trackers for user {username}")
-        trackers = [Tracker(**tracker_doc) for tracker_doc in all_trackers]
-        print(f"@@@@@ Returning {len(trackers)} trackers for user {username}")
         return all_trackers
     
     def get_trackers_by_client_id(self, client_id: str, username: str) -> List[Tracker]:
