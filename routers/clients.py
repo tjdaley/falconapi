@@ -41,7 +41,7 @@ async def get_clients(search_field: str, search_value: str, current_user: User =
     Returns:
         Client: The Client object if the user is active, None otherwise.
     """
-    valid_search_fields = ['id', 'billing_number']
+    valid_search_fields = ['client_id', 'billing_number']
     if search_field not in valid_search_fields:
         raise HTTPException(status_code=400, detail=f"Invalid search field {search_field}. Valid search fields are {valid_search_fields}")
     args = {
