@@ -290,7 +290,7 @@ class TrackersTable(Database):
         all_trackers = []
         print(f"@@@@@ Found {len(clients)} clients")
         for client in clients:
-            trackers = self.collection.find({'client_reference': client.id})
+            trackers = self.collection.find({'client_id': client.id})
             print(f"@@@@@ Found tracker for client {client.id}")
             for tracker in trackers:
                 print(f"\t\t@@@@@ Found tracker {tracker['id']} for client {client.id}")
