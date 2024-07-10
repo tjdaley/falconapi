@@ -49,10 +49,10 @@ class TrackersDict(dict):
         self.collection = self.trackers.collection
 
     def __getitem__(self, key):
-        return self.trackers.get_tracker(key)
+        return self.trackers.get(key)
 
     def __setitem__(self, key, value):
-        tracker = self.trackers.get_tracker(key)
+        tracker = self.trackers.get(key)
         if tracker:
             self.trackers.update_tracker(value)
         else:
@@ -62,7 +62,7 @@ class TrackersDict(dict):
         self.trackers.delete_tracker(key)
 
     def __contains__(self, key):
-        return self.trackers.get_tracker(key) is not None
+        return self.trackers.get(key) is not None
 
     def __iter__(self):
         return iter([tracker['id'] for tracker in self.trackers.get_all_trackers()])
@@ -88,7 +88,7 @@ class TrackersDict(dict):
         return [(tracker['id'], tracker) for tracker in trackers]
     
     def get(self, key, default=None):
-        return self.trackers.get_tracker(key) or default
+        return self.trackers.get(key) or default
 
     def link_doc(self, tracker: Tracker, document: Document) -> bool:
         """
@@ -255,7 +255,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to delete the tracker.
         """
-        tracker: Tracker = self.get_tracker(tracker_id, username)
+        tracker: Tracker = self.get(tracker_id, username)
         if not tracker:
             return {'deleted_count': 0}
         # See if this user is authorized to update this tracker.
@@ -372,7 +372,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to update the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return False
         # See if this user is authorized to update this tracker.
@@ -385,7 +385,7 @@ class TrackersTable(Database):
             raise Exception(f"Document {document.id} is already in tracker {tracker.id}")
         existing_tracker.documents.append(document.id)
         try:
-            self.update_tracker(existing_tracker, username)
+            self.update(existing_tracker, username)
         except Exception as e:
             return False
         return True
@@ -405,7 +405,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to update the tracker.        
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return False
         # See if this user is authorized to update this tracker.
@@ -417,7 +417,7 @@ class TrackersTable(Database):
             raise Exception(f"Document {document_id} is not in tracker {tracker.id}")
         existing_tracker.documents.remove(document_id)
         try:
-            self.update_tracker(existing_tracker, username)
+            self.update(existing_tracker, username)
         except Exception as e:
             return False
         return True
@@ -533,7 +533,7 @@ class TrackersTable(Database):
             #'MISSING_PAGES': self.get_missing_pages
         }
 
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=[])
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
@@ -559,7 +559,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return []
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
@@ -581,7 +581,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return []
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
@@ -626,7 +626,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return []
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
@@ -671,7 +671,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker.id, username)
+        existing_tracker: Tracker = self.get(tracker.id, username)
         if not existing_tracker:
             return []
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
@@ -726,7 +726,7 @@ class TrackersTable(Database):
         Raises:
             UnauthorizedUserError: If the user is not authorized to access the tracker.
         """
-        existing_tracker: Tracker = self.get_tracker(tracker_id, username)
+        existing_tracker: Tracker = self.get(tracker_id, username)
         if not existing_tracker:
             return []
         if not CLIENTS_DB.is_authorized(existing_tracker.client_id, username):
