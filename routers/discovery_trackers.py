@@ -195,7 +195,7 @@ async def link_document(tracker_id: str, document_id: str, user: User = Depends(
         log_audit_event('link_document', tracker_id, user, success=False, message=f"Error linking document to tracker: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error linking document to tracker: {e}")
     log_audit_event('link_document', tracker_id, user, new_data="{'document_id': document_id}")
-    return {'message': "Document linked to tracker", 'id': document_id}
+    return {'message': "Document linked to tracker", 'id': document_id, 'version': tracker.version}
 
 # Unlink a document from a tracker
 @router.patch('/{tracker_id}/documents/unlink/{document_id}', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a document from a tracker')
@@ -206,7 +206,7 @@ async def unlink_document(tracker_id: str, document_id: str, user: User = Depend
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tracker not found: {tracker_id}")
     tracker_db.unlink_doc(tracker, document_id, user.username)
     log_audit_event('unlink_document', tracker_id, user, old_data="{'document_id': document_id}")
-    return {'message': "Document unlinked from tracker", 'id': document_id}
+    return {'message': "Document unlinked from tracker", 'id': document_id, 'version': tracker.version}
 
 # Get all documents from a tracker
 @router.get('/{tracker_id}/documents', status_code=status.HTTP_200_OK, response_model=List[Document], summary='Get all documents from a tracker')
