@@ -22,20 +22,20 @@ class Document(BaseModel):
     type: str
     title: str
     create_date: str
-    document_date: Optional[Union[str, datetime]]
-    beginning_bates: Optional[str]
-    ending_bates: Optional[str]
-    page_count: Optional[int]
-    client_reference: Optional[str]
-    added_username: Optional[str]
+    document_date: Optional[Union[str, datetime]] = Field(default=None)
+    beginning_bates: Optional[str] = Field(default=None)
+    ending_bates: Optional[str] = Field(default=None)
+    page_count: Optional[int] = Field(default=None)
+    client_reference: Optional[str] = Field(default=None)
+    added_username: Optional[str] = Field(default=None)
     added_date: datetime = Field(default_factory=datetime.now)
-    updated_username: Optional[str]
+    updated_username: Optional[str] = Field(default=None)
     updated_date: datetime = Field(default_factory=datetime.now)
     version: Optional[str] = str(uuid4())
-    classification: Optional[str]
-    sub_classification: Optional[dict]
-    page_max: Optional[int]  # The highest Y of the Page X of Y patterns we found
-    missing_pages: Optional[str]  # Comma separated list of missing page numbers
+    classification: Optional[str] = Field(default=None)
+    sub_classification: Optional[dict] = Field(default=None)
+    page_max: Optional[int] = Field(default=None) # The highest Y of the Page X of Y patterns we found
+    missing_pages: Optional[str] = Field(default=None) # Comma separated list of missing page numbers
     produced_date: Optional[Union[str, datetime]] = ''
 
     class Config:
@@ -74,15 +74,15 @@ class PutExtendedDocumentProperties(BaseModel):
 
     id: str  # The id of the associated document, which much already be in the documents collection
     images: Optional[List[str]]
-    text: Optional[str]
-    clean_text: Optional[str]
-    props: Optional[dict]
+    text: Optional[str] = Field(default=None)
+    clean_text: Optional[str] = Field(default=None)
+    props: Optional[dict] = Field(default=None)
     version: Optional[str] = str(uuid4())
     job_id: Optional[str] = None
     extraction_type: Optional[str] = None
     job_status: Optional[str] = None
-    pages: Optional[int]
-    tables: Optional[dict]
+    pages: Optional[int] = 0
+    tables: Optional[dict] = Field(default=None)
     has_tables: Optional[bool] = False
 
     @root_validator(pre=True)
@@ -102,15 +102,15 @@ class ExtendedDocumentProperties(BaseModel):
     in training the document classification models
     """
     id: str         # The id of the associated document, which much already be in the documents collection
-    images: Optional[List[str]]
-    text: Optional[str]
-    clean_text: Optional[str]
-    props: Optional[dict]
+    images: Optional[List[str]] = Field(default=None)
+    text: Optional[str] = Field(default=None)
+    clean_text: Optional[str] = Field(default=None)
+    props: Optional[dict] = Field(default=None)
     version: Optional[str] = str(uuid4())
     job_id: Optional[str] = None
     extraction_type: Optional[str] = None
     job_status: Optional[str] = None
-    pages: Optional[int]
+    pages: Optional[int] = 0
     tables: Optional[dict] = Field(
         None,
         exclude=True,
