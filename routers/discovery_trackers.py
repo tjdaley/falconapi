@@ -82,9 +82,9 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
     except Exception as e:
         LOGGER.error("Error creating tracker: %s", e)
         log_audit_event('create_tracker', tracker.id, user, success=False, message=f"Error creating tracker: {e}")
-        return {'message': f"Error creating tracker: {e!s}", 'client_id': tracker.client_id, 'success': False}
+        return {'message': f"Error creating tracker: {e!s}", 'client_id': tracker.client_id, 'success': False, 'version': "", 'id': ""}
     log_audit_event('create_tracker', tracker.id, user, new_data=tracker)
-    return {'message': "Tracker created", 'id': tracker.id, 'success': True}
+    return {'message': "Tracker created", 'id': tracker.id, 'success': True, 'version': tracker.version}
 
 # Get a tracker by Tracker ID
 @router.get('/', status_code=status.HTTP_200_OK, response_model=Tracker, summary='Get a tracker by Tracker ID')
