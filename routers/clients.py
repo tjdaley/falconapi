@@ -76,7 +76,7 @@ async def register_client(client: Client, current_user: User = Depends(get_curre
     xclient: Client = CLIENTS_TABLE.get_clients(billing_number=client.billing_number, username=user_email)
     if xclient:
         raise HTTPException(status_code=400, detail=f"Client already exists (billing number {client.billing_number})")
-    xclient: Client = CLIENTS_TABLE.get_clients(id=client.id, username=user_email)
+    xclient: Client = CLIENTS_TABLE.get_clients(client_id=client.id, username=user_email)
     if xclient:
         raise HTTPException(status_code=400, detail=f"Client already exists (id {client.id})")
 
