@@ -187,7 +187,7 @@ class TrackersTable(Database):
         if not CLIENTS_DB.is_authorized(tracker.client_id, username):
             raise UnauthorizedUserError(username, tracker.client_id)
 
-        existing_tracker = self.get(tracker.id)
+        existing_tracker = self.get(tracker.id, username)
         if existing_tracker:
             if self.fail_silent:
                 return self.insert_one_result(tracker.id)
