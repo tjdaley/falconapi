@@ -73,7 +73,7 @@ class PutExtendedDocumentProperties(BaseModel):
     """
 
     id: str  # The id of the associated document, which much already be in the documents collection
-    images: Optional[List[str]]
+    images: Optional[List[str]] = Field(default=None)
     text: Optional[str] = Field(default=None)
     clean_text: Optional[str] = Field(default=None)
     props: Optional[dict] = Field(default=None)
