@@ -68,7 +68,7 @@ async def add_document_props(
 
     # Add the extended properties
     extendedprops[document_id] = props
-    return {'message': f"Document properties {verb}", 'id': document_id}
+    return {'message': f"Document properties {verb}", 'id': document_id, 'version': documents[document_id].version}
 
 
 # Get a document by ID or path
