@@ -217,7 +217,7 @@ async def update_document_props(
 
     # Save the extended properties
     extendedprops[props.id] = props
-    return {"message": f"Document properties updated (put)", "id": props.id}
+    return {"message": f"Document properties updated (put)", "id": props.id, "version": documents[props.id].version}
 
 
 def update_tables(existing_tables: dict, new_tables: dict):
@@ -268,7 +268,7 @@ async def delete_document(doc_id: str, cascade: bool = True, user: User = Depend
     del documents[doc_id]
     trackers.delete_document_from_trackers(doc_id)
     del extendedprops[doc_id]
-    return {'message': "Document deleted", 'id': doc_id}
+    return {'message': "Document deleted", 'id': doc_id, 'version': doc.version}
 
 # Delete extended document properties
 @router.delete('/props', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete extended document properties')
@@ -278,4 +278,4 @@ async def delete_document_props(doc_id: str, user: User = Depends(get_current_ac
     if documents[doc_id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     del extendedprops[doc_id]
-    return {'message': "Document properties deleted", 'id': doc_id}
+    return {'message': "Document properties deleted", 'id': doc_id, 'version': documents[doc_id].version}
