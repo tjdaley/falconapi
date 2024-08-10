@@ -82,7 +82,7 @@ async def create_tracker(tracker: Tracker, user: User = Depends(get_current_acti
     except Exception as e:
         LOGGER.error("Error creating tracker: %s", e)
         log_audit_event('create_tracker', tracker.id, user, success=False, message=f"Error creating tracker: {e}")
-        return {'message': f"Error creating tracker: {e!s}", 'client_id': tracker.client_id, 'success': False, 'version': "", 'id': ""}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating tracker: {e!s} client_id: {tracker.client_id}")
     log_audit_event('create_tracker', tracker.id, user, new_data=tracker)
     return {'message': "Tracker created", 'id': tracker.id, 'success': True, 'version': tracker.version}
 
@@ -147,6 +147,7 @@ async def update_tracker(tracker: TrackerUpdate, user: User = Depends(get_curren
     existing_tracker.version = str(uuid4())
     existing_tracker.name = tracker.name or existing_tracker.name
     existing_tracker.bates_pattern = tracker.bates_pattern or existing_tracker.bates_pattern
+    existing_tracker.client_reference = tracker.client_reference or existing_tracker.client_reference
     try:
         tracker_db.update(existing_tracker, user.username)
     except Exception as e:

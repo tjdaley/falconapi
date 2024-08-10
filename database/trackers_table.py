@@ -220,6 +220,7 @@ class TrackersTable(Database):
                 {'$set': {
                     'name': tracker.name,
                     'bates_pattern': tracker.bates_pattern,
+                    'client_reference': tracker.client_reference,
                     'documents': tracker.documents,
                     'updated_username': username,
                     'updated_date': datetime.now(),
@@ -234,6 +235,7 @@ class TrackersTable(Database):
             {'$set': {
                 'name': tracker.name,
                 'bates_pattern': tracker.bates_pattern,
+                'client_reference': tracker.client_reference,
                 'updated_username': username,
                 'updated_date': datetime.now(),
                 'version': str(uuid4())

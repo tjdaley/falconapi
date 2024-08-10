@@ -12,6 +12,7 @@ from routers.api_version import APIVersion
 from routers.documents import router as documents
 from routers.childsupport import router as childsupport
 from routers.clients import router as clients
+from routers.discovery_requests import router as discovery_requests
 from routers.discovery_trackers import router as discovery_trackers
 from routers.users import router as users
 from routers.utility import router as utility
@@ -28,6 +29,10 @@ SERVERS = [
         "url": "https://api.jdbot.us",
         "description": "Production Server",
     },
+    {
+        "url": "http://localhost:8000",
+        "description": "Local Development Server",
+    }
 ]
 
 app = FastAPI(
@@ -52,6 +57,7 @@ app.include_router(utility, prefix=API_VERSION_PREFIX)
 app.include_router(documents, prefix=API_VERSION_PREFIX)
 app.include_router(childsupport, prefix=API_VERSION_PREFIX)
 app.include_router(clients, prefix=API_VERSION_PREFIX)
+app.include_router(discovery_requests, prefix=API_VERSION_PREFIX)
 
 @app.get(
     '/',

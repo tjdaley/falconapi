@@ -13,6 +13,12 @@ class Client(BaseModel):
     authorized_users: Optional[list] = []
     enabled: Optional[bool] = True
     version: Optional[str] = str(uuid4())
+    cause_number: Optional[str] = None
+    us_state: Optional[str] = None
+    county: Optional[str] = None
+    court_name: Optional[str] = None
+    court_type: Optional[str] = None
+    matter_type: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -21,6 +27,12 @@ class Client(BaseModel):
                 "id": "asdflk7jksd234fjk",
                 "name": "Daley, Thomas J.",
                 "billing_number": "BR549",
+                "cause_number": "123456789",
+                "us_state": "TX",
+                "county": "Dallas",
+                "court_name": "256th Judicial District Court",
+                "court_type": "District",
+                "matter_type": "DIVC",
                 "created_by": "test_user@test.com",
                 "authorized_users": [
                     "test_user@test.com"

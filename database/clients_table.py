@@ -46,7 +46,7 @@ class ClientsTable(Database):
         Returns:
             List[Client]: The Client object if the client exists, empty list otherwise.
         """
-        if not id and not billing_number:
+        if not client_id and not billing_number:
             raise MissingSearchParamException()
         if not username:
             raise MissingUsernameException()
@@ -58,6 +58,20 @@ class ClientsTable(Database):
         query['$or'] = [{'created_by': username}, {'authorized_users': username.lower()}]
         client_docs = self.collection.find(query)
         return [Client(**client_doc) for client_doc in client_docs]
+    
+    def get_authorized_clients(self, username: str) -> List[dict]:
+        """
+        Get a list of client IDs and billing numbers that a user is authorized to access.
+
+        Args:
+            username (str): The user's username.
+
+        Returns:
+            List[dict]: A list of client IDs and billing numbers. {'id': 'uuid', 'billing_number': '1234'}
+        """
+        query = {'$or': [{'created_by': username}, {'authorized_users': username.lower()}]}
+        client_docs = self.collection.find(query , {'id': 1, 'billing_number': 1})
+        return [{'id': client_doc['id'], 'billing_number': client_doc['billing_number']} for client_doc in client_docs]
     
     def is_authorized(self, client_id: str, username: str) -> bool:
         """

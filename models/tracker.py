@@ -56,6 +56,7 @@ class TrackerUpdate(BaseModel):
 	name: Optional[str]
 	bates_pattern: Optional[str]
 	version: Optional[str] = str(uuid4())
+	client_reference: Optional[str] = None
 
 	class Config:
 		from_attributes = True
@@ -63,6 +64,8 @@ class TrackerUpdate(BaseModel):
 			"example": {
 				"id": "tracker-1",
 				"name": "New Tracker Name",
+				"bates_pattern": "TJD \\d{6}",
+				"client_reference": "Client Reference"
 			}
 		}
 

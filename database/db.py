@@ -43,3 +43,12 @@ class Database():
             'upserted_id': None,
             'raw_result': None
         }
+    
+    def delete_one_result(self) -> dict:
+        """
+        Return for a fail-silent Delete operation
+        """
+        return {
+            'acknowledged': False,
+            'deleted_count': 0
+        }
