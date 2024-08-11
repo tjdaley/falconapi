@@ -127,6 +127,12 @@ class ClientsTable(Database):
             {'$set': {
                 'name': client.name,
                 'billing_number': client.billing_number,
+                'us_state': client.us_state,
+                'county': client.county,
+                'court_name': client.court_name,
+                'cause_number': client.cause_number,
+                'court_type': client.court_type,
+                'matter_type': client.matter_type,
                 'enabled': client.enabled,
                 'version': str(uuid4())
                 }
