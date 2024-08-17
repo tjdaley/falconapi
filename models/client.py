@@ -9,7 +9,7 @@ class Client(BaseModel):
     id: Optional[str] = str(uuid4())
     name: str
     billing_number: str
-    created_by: str
+    created_by: Optional[str] = None  # Filled in by the API based on the logged in user's email.
     authorized_users: Optional[list] = []
     enabled: Optional[bool] = True
     version: Optional[str] = str(uuid4())
