@@ -24,7 +24,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[Client], tags=["Discovery Requests"], summary="Get all by client_id, set client_id to '*' to get all")
+@router.get("/", response_model=ServedRequests, tags=["Discovery Requests"], summary="Get all by client_id, set client_id to '*' to get all")
 async def get_request_service(search_field: str, search_value: str, current_user: User = Depends(get_current_active_user)) -> ServedRequests:
     """
     Return information about discovery requests.
