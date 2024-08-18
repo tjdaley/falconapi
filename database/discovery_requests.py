@@ -96,7 +96,7 @@ class DiscoveryRequestsTable(Database):
                 else:
                     served_requests[key]['response_count'] += 1
 
-        return ServedRequests([ServedRequest(**served_request) for served_request in served_requests.values()])
+        return ServedRequests([ServedRequest(**request) for request in served_requests])
     
     def get_requests(self, served_by: str, served_date: str, request_type: str, client_id: str = None, username: str = None) -> ServedRequests:
         """
