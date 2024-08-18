@@ -47,6 +47,21 @@ async def get_request_service(search_field: str, search_value: str, current_user
     data: ServedRequests = DISCOVERY_REQUESTS_TABLE.get_request_service_list(**args)
     return data
 
+@router.get("/{id}", response_model=DiscoveryRequest, tags=["Discovery Requests"], summary="Get a specific discovery request")
+async def get_request(id: str, current_user: User = Depends(get_current_active_user)) -> DiscoveryRequest:
+    """
+    Return information about a specific discovery request.
+
+    Args:
+        id (str): The discovery request ID.
+        current_user (User): The current user.
+
+    Returns:
+        DiscoveryRequest: The discovery request.
+    """
+    data: DiscoveryRequest = DISCOVERY_REQUESTS_TABLE.get_request(id, current_user.email)
+    return data
+
 @router.post(
     '/',
     status_code=status.HTTP_201_CREATED,

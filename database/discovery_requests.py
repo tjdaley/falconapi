@@ -81,14 +81,20 @@ class DiscoveryRequestsTable(Database):
             served_date = request_doc['served_date'].replace(boundary, ' ').strip()
             key = f"{client_id}{boundary}{request_type}{boundary}{served_by}{boundary}{served_date}"
             if key in served_requests:
-                served_requests[key]['count'] += 1
+                served_requests[key]['request_count'] += 1
             else:
-                served_requests[key]['count'] = 1
+                served_requests[key]['request_count'] = 1
                 served_requests[key]['client_id'] = client_id
                 served_requests[key]['request_type'] = request_type
                 served_requests[key]['served_by'] = served_by
                 served_requests[key]['served_date'] = served_date
                 served_requests[key]['due_date'] = request_doc['due_date']
+
+            if request_doc.get('response'):
+                if 'response_count' not in served_requests[key]:
+                    served_requests[key]['response_count'] = 1
+                else:
+                    served_requests[key]['response_count'] += 1
 
         return ServedRequests(requests=[ServedRequest(**served_request) for served_request in served_requests.values()])
     
@@ -180,7 +186,13 @@ class DiscoveryRequestsTable(Database):
                 'responsive_classifications': request.responsive_classifications,
                 'lookback_date': request.lookback_date,
                 'due_date': request.due_date,
-                'version': str(uuid4())
+                'request_type': request.request_type,
+                'served_by': request.served_by,
+                'served_date': request.served_date,
+                'request_number': request.request_number,
+                'version': str(uuid4()),
+                'last_updated_by': username,
+                'last_updated_date': request.last_updated_date
                 }
             }
         )

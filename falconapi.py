@@ -2,7 +2,7 @@
 falconapi.py - Falcon API
 
 TODO: Set up opentelemetry
-TODO: Set up an OpenTelemtry exporter for this API
+TODO: Set up an OpenTelemetry exporter for this API
 https://grafana.com/blog/2022/05/10/how-to-collect-prometheus-metrics-with-the-opentelemetry-collector-and-grafana/
 """
 from sys import prefix
@@ -23,7 +23,7 @@ import settings  # NOQA
 api_version = APIVersion(1, 0)
 API_VERSION = api_version.to_str()
 API_VERSION_PREFIX = f'/api/{API_VERSION}'
-COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2023.11.05)"
+COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2024.08.18)"
 SERVERS = [
     {
         "url": "https://api.jdbot.us",
