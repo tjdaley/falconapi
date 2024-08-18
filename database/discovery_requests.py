@@ -96,7 +96,36 @@ class DiscoveryRequestsTable(Database):
                 else:
                     served_requests[key]['response_count'] += 1
 
-        return ServedRequests(requests=[ServedRequest(**served_request) for served_request in served_requests.values()])
+        return ServedRequests([ServedRequest(**served_request) for served_request in served_requests.values()])
+    
+    def get_requests(self, served_by: str, served_date: str, request_type: str, client_id: str = None, username: str = None) -> ServedRequests:
+        """
+        Get list of each request of a batch of requests from the database.
+
+        Args:
+            served_by (str): The person who served the request.
+            served_date (str): The date the request was served.
+            request_type (str): The type of request.
+            client_id (str): The client's ID.
+            username (str): The user's username.
+
+        Returns:
+            List[Client]: The Client object if the client exists, empty list otherwise.
+        """
+        if not client_id:
+            raise MissingSearchParamException()
+        if not username:
+            raise MissingUsernameException()
+        
+        if not self.is_authorized(username, client_id):
+            return ServedRequests(requests=[])
+        
+        auth_clients: dict = self.clients_table.get_authorized_clients(username)
+
+        query = {'client_id': client_id, 'served_by': served_by, 'served_date': served_date, 'request_type': request_type}
+        request_docs = self.collection.find(query)
+
+        return ServedRequests([ServedRequest(**served_request) for served_request in request_docs])
     
     def is_authorized(self, username: str, client_id: str = None, billing_number: str = None, wildcard_allowed=True) -> bool:
         """

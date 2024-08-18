@@ -82,23 +82,27 @@ class DiscoveryRequests(BaseModel):
 # This represents a service document, not an individual request. The service document is a summary of all requests served to a client.
 #
 class ServedRequest(BaseModel):
+    id: str
     client_id: str
     request_type: str
     served_date: str
     due_date: str
     served_by: str
     request_count: int
+    response_count: Optional[int] = None
 
     class Config:
         from_attributes = True
         json_schema_extra = {
             "example": {
+                "id": "asdflk7jksd234fjk",
                 "client_id": "uuid-1234",
                 "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                 "served_date": "2024-08-03",
                 "due_date": "2024-09-02",
                 "served_by": "John Q. Doe",
                 "request_count": 25,
+                "response_count": 10
             }
         }
 
@@ -111,6 +115,7 @@ class ServedRequests(BaseModel):
             "example": {
                 "requests": [
                     {
+                        "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
                         "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-08-03",
@@ -119,6 +124,7 @@ class ServedRequests(BaseModel):
                         "request_count": 25,
                     },
                     {
+                        "id": "asdflk7jksd234fjl",
                         "client_id": "uuid-1234",
                         "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-09-01",
