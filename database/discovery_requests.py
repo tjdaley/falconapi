@@ -54,7 +54,7 @@ class DiscoveryRequestsTable(Database):
         if not username:
             raise MissingUsernameException()
         
-        if not self.clients_table.is_authorized(username, client_id, billing_number):
+        if not self.is_authorized(username, client_id, billing_number):
             return ServedRequests(requests=[])
         
         auth_clients: dict = self.clients_table.get_authorized_clients(username)
