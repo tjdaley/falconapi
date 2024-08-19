@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class DiscoveryRequest(BaseModel):
     id: Optional[str] = str(uuid4())
     client_id: str
-    request_type: str
+    discovery_type: str
     served_date: str
     due_date: Optional[str] = None
     served_by: str
@@ -28,7 +28,7 @@ class DiscoveryRequest(BaseModel):
             "example": {
                 "id": "asdflk7jksd234fjk",
                 "client_id": "uuid-1234",
-                "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                 "served_date": "2024-08-03",
                 "due_date": "2024-09-02",
                 "served_by": "John Q. Doe",
@@ -55,7 +55,7 @@ class DiscoveryRequests(BaseModel):
                     {
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
-                        "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                        "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
@@ -66,7 +66,7 @@ class DiscoveryRequests(BaseModel):
                     {
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
-                        "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                        "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
@@ -84,7 +84,7 @@ class DiscoveryRequests(BaseModel):
 class ServedRequest(BaseModel):
     id: str
     client_id: str
-    request_type: str
+    discovery_type: str
     served_date: str
     due_date: str
     served_by: str
@@ -97,7 +97,7 @@ class ServedRequest(BaseModel):
             "example": {
                 "id": "asdflk7jksd234fjk",
                 "client_id": "uuid-1234",
-                "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                 "served_date": "2024-08-03",
                 "due_date": "2024-09-02",
                 "served_by": "John Q. Doe",
@@ -117,7 +117,7 @@ class ServedRequests(BaseModel):
                     {
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
-                        "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                        "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
@@ -126,7 +126,7 @@ class ServedRequests(BaseModel):
                     {
                         "id": "asdflk7jksd234fjl",
                         "client_id": "uuid-1234",
-                        "request_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
+                        "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "served_date": "2024-09-01",
                         "due_date": "2024-09-30",
                         "served_by": "John Q. Doe",
