@@ -71,22 +71,22 @@ class DiscoveryRequestsTable(Database):
         query = {'client_id': {'$in': client_ids}}
         request_docs = self.collection.find(query)
 
-        # summarize the requests by combining the discovery_type, served_by, and service_date and counting the number of requests
+        # summarize the requests by combining the discovery_type, party_name, and service_date and counting the number of requests
         served_requests = {}
         boundary = '::'
         for request_doc in request_docs:
             client_id = request_doc['client_id'].replace(boundary, ' ').strip()
             discovery_type = request_doc['discovery_type'].replace(boundary, ' ').strip().title()
-            served_by = request_doc['served_by'].replace(boundary, ' ').strip().title()
+            party_name = request_doc['party_name'].replace(boundary, ' ').strip().title()
             service_date = request_doc['service_date'].replace(boundary, ' ').strip()
-            key = f"{client_id}{boundary}{discovery_type}{boundary}{served_by}{boundary}{service_date}"
+            key = f"{client_id}{boundary}{discovery_type}{boundary}{party_name}{boundary}{service_date}"
             if key in served_requests:
                 served_requests[key]['request_count'] += 1
             else:
                 served_requests[key]['request_count'] = 1
                 served_requests[key]['client_id'] = client_id
                 served_requests[key]['discovery_type'] = discovery_type
-                served_requests[key]['served_by'] = served_by
+                served_requests[key]['party_name'] = party_name
                 served_requests[key]['service_date'] = service_date
                 served_requests[key]['due_date'] = request_doc['due_date']
 
@@ -99,12 +99,12 @@ class DiscoveryRequestsTable(Database):
         request_list = [ServedRequest(**served_request) for served_request in served_requests.values()]
         return ServedRequests(requests=request_list)
     
-    def get_requests(self, served_by: str, service_date: str, discovery_type: str, client_id: str = None, username: str = None) -> ServedRequests:
+    def get_requests(self, party_name: str, service_date: str, discovery_type: str, client_id: str = None, username: str = None) -> ServedRequests:
         """
         Get list of each request of a batch of requests from the database.
 
         Args:
-            served_by (str): The person who served the request.
+            party_name (str): The person who served the request.
             service_date (str): The date the request was served.
             discovery_type (str): The type of request.
             client_id (str): The client's ID.
@@ -123,7 +123,7 @@ class DiscoveryRequestsTable(Database):
         
         auth_clients: dict = self.clients_table.get_authorized_clients(username)
 
-        query = {'client_id': client_id, 'served_by': served_by, 'service_date': service_date, 'discovery_type': discovery_type}
+        query = {'client_id': client_id, 'party_name': party_name, 'service_date': service_date, 'discovery_type': discovery_type}
         request_docs = self.collection.find(query)
 
         return ServedRequests([ServedRequest(**served_request) for served_request in request_docs])
@@ -217,7 +217,7 @@ class DiscoveryRequestsTable(Database):
                 'lookback_date': request.lookback_date,
                 'due_date': request.due_date,
                 'discovery_type': request.discovery_type,
-                'served_by': request.served_by,
+                'party_name': request.party_name,
                 'service_date': request.service_date,
                 'request_number': request.request_number,
                 'version': str(uuid4()),

@@ -11,7 +11,7 @@ class DiscoveryRequest(BaseModel):
     discovery_type: str
     service_date: str
     due_date: Optional[str] = None
-    served_by: str
+    party_name: str
     request_number: int
     request_text: str
     lookback_date: Optional[str] = None
@@ -31,7 +31,7 @@ class DiscoveryRequest(BaseModel):
                 "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                 "service_date": "2024-08-03",
                 "due_date": "2024-09-02",
-                "served_by": "John Q. Doe",
+                "party_name": "John Q. Doe",
                 "request_number": 1,
                 "request_text": "All documents related to the case",
                 "lookback_date": "2019-01-01",
@@ -58,7 +58,7 @@ class DiscoveryRequests(BaseModel):
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
-                        "served_by": "John Q. Doe",
+                        "party_name": "John Q. Doe",
                         "request_number": 1,
                         "request_text": "All documents related to the case",
                         "lookback_date": "2019-01-01",
@@ -69,7 +69,7 @@ class DiscoveryRequests(BaseModel):
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
-                        "served_by": "John Q. Doe",
+                        "party_name": "John Q. Doe",
                         "request_number": 2,
                         "request_text": "All bank statements related to the case",
                         "lookback_date": "2019-01-01",
@@ -87,7 +87,7 @@ class ServedRequest(BaseModel):
     discovery_type: str
     service_date: str
     due_date: str
-    served_by: str
+    party_name: str
     request_count: int
     response_count: Optional[int] = None
 
@@ -100,7 +100,7 @@ class ServedRequest(BaseModel):
                 "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                 "service_date": "2024-08-03",
                 "due_date": "2024-09-02",
-                "served_by": "John Q. Doe",
+                "party_name": "John Q. Doe",
                 "request_count": 25,
                 "response_count": 10
             }
@@ -120,7 +120,7 @@ class ServedRequests(BaseModel):
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
-                        "served_by": "John Q. Doe",
+                        "party_name": "John Q. Doe",
                         "request_count": 25,
                     },
                     {
@@ -129,7 +129,7 @@ class ServedRequests(BaseModel):
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
                         "service_date": "2024-09-01",
                         "due_date": "2024-09-30",
-                        "served_by": "John Q. Doe",
+                        "party_name": "John Q. Doe",
                         "request_count": 32,
                     }
                 ]
