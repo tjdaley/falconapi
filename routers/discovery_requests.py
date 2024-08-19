@@ -107,7 +107,7 @@ async def add_request(request: DiscoveryRequest, current_user: User = Depends(ge
     result: InsertOneResult = DISCOVERY_REQUESTS_TABLE.create_request(request, user_email)
     return {
         'id': request.id,
-        'success': result.get('success', False),
+        'success': result.inserted_id is not None,
     }
 
 @router.put(
