@@ -83,7 +83,7 @@ class DiscoveryRequestsTable(Database):
             if key in served_requests:
                 served_requests[key]['request_count'] += 1
             else:
-                served_requests[key] = {}
+                served_requests[key] = {'id': 'AGGREGATE'}
                 served_requests[key]['request_count'] = 1
                 served_requests[key]['client_id'] = client_id
                 served_requests[key]['discovery_type'] = discovery_type

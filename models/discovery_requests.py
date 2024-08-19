@@ -86,7 +86,7 @@ class ServedRequest(BaseModel):
     client_id: str
     discovery_type: str
     service_date: str
-    due_date: str
+    due_date: Optional[str] = None
     party_name: str
     request_count: int
     response_count: Optional[int] = None
