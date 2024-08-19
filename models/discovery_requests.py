@@ -9,7 +9,7 @@ class DiscoveryRequest(BaseModel):
     id: Optional[str] = str(uuid4())
     client_id: str
     discovery_type: str
-    served_date: str
+    service_date: str
     due_date: Optional[str] = None
     served_by: str
     request_number: int
@@ -29,7 +29,7 @@ class DiscoveryRequest(BaseModel):
                 "id": "asdflk7jksd234fjk",
                 "client_id": "uuid-1234",
                 "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                "served_date": "2024-08-03",
+                "service_date": "2024-08-03",
                 "due_date": "2024-09-02",
                 "served_by": "John Q. Doe",
                 "request_number": 1,
@@ -56,7 +56,7 @@ class DiscoveryRequests(BaseModel):
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                        "served_date": "2024-08-03",
+                        "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
                         "request_number": 1,
@@ -67,7 +67,7 @@ class DiscoveryRequests(BaseModel):
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                        "served_date": "2024-08-03",
+                        "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
                         "request_number": 2,
@@ -85,7 +85,7 @@ class ServedRequest(BaseModel):
     id: str
     client_id: str
     discovery_type: str
-    served_date: str
+    service_date: str
     due_date: str
     served_by: str
     request_count: int
@@ -98,7 +98,7 @@ class ServedRequest(BaseModel):
                 "id": "asdflk7jksd234fjk",
                 "client_id": "uuid-1234",
                 "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                "served_date": "2024-08-03",
+                "service_date": "2024-08-03",
                 "due_date": "2024-09-02",
                 "served_by": "John Q. Doe",
                 "request_count": 25,
@@ -118,7 +118,7 @@ class ServedRequests(BaseModel):
                         "id": "asdflk7jksd234fjk",
                         "client_id": "uuid-1234",
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                        "served_date": "2024-08-03",
+                        "service_date": "2024-08-03",
                         "due_date": "2024-09-02",
                         "served_by": "John Q. Doe",
                         "request_count": 25,
@@ -127,7 +127,7 @@ class ServedRequests(BaseModel):
                         "id": "asdflk7jksd234fjl",
                         "client_id": "uuid-1234",
                         "discovery_type": "PRODUCTION.INTERROGATORIES.DISCLOSURES.ADMISSIONS",
-                        "served_date": "2024-09-01",
+                        "service_date": "2024-09-01",
                         "due_date": "2024-09-30",
                         "served_by": "John Q. Doe",
                         "request_count": 32,
