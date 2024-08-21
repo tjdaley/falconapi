@@ -25,7 +25,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=DiscoveryFile, tags=["Discovery Files"], summary="Get a discovery file")
+@router.get("/{file_id}", response_model=DiscoveryFile, tags=["Discovery Files"], summary="Get a discovery file")
 async def get_discovery_file(file_id: str, current_user: User = Depends(get_current_active_user)):
     """
     Return information about a discovery file or all files.
@@ -40,7 +40,7 @@ async def get_discovery_file(file_id: str, current_user: User = Depends(get_curr
     data = DISCOVERY_FILES_TABLE.get(file_id, current_user.email)
     return data
 
-@router.get("/client", response_model=List[DiscoveryFileSummary], tags=["Discovery Files"], summary="Get all discovery files for a client")
+@router.get("/client/{client_id}", response_model=List[DiscoveryFileSummary], tags=["Discovery Files"], summary="Get all discovery files for a client")
 async def get_all_discovery_files(client_id: str, current_user: User = Depends(get_current_active_user)) -> List[DiscoveryFileSummary]:
     """
     Return information about all discovery files.
