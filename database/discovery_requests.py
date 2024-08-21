@@ -48,9 +48,10 @@ class DiscoveryRequestsTable(Database):
             DiscoveryRequest: The DiscoveryRequest object if the request exists, None otherwise.
         """
         request = self.collection.find_one({'id': request_id})
+        client_id = self.client_id(request)
         if not request:
             return None
-        if not self.is_authorized(username, client_id=request['client_id']):
+        if not self.is_authorized(username, client_id=client_id):
             return None
         return DiscoveryRequest(**request)
     
@@ -77,7 +78,8 @@ class DiscoveryRequestsTable(Database):
         """
         request.created_by = username
         request.create_date = datetime.now().strftime("%Y-%m-%d")
-        if not self.is_authorized(username=username, client_id=request.client_id):
+        client_id = self.client_id(request)
+        if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.insert_one_result(request.id)
             raise Exception(f"User {username} is not authorized to create a request for client {request.client_id}")
@@ -101,7 +103,8 @@ class DiscoveryRequestsTable(Database):
             dict: The result of the update operation.
         """
         original_request = self.collection.find_one({'id': request.id})
-        if not self.is_authorized(username=username, client_id=original_request['client_id']):
+        client_id = self.client_id(original_request)
+        if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.update_one_result(request.id)
             raise Exception(f"User {username} is not authorized to update request {request.id}")
@@ -137,7 +140,8 @@ class DiscoveryRequestsTable(Database):
             dict: The result of the delete operation.
         """
         original_request = self.collection.find_one({'id': request_id})
-        if not self.is_authorized(username=username, client_id=original_request['client_id']):
+        client_id = self.client_id(original_request)
+        if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.delete_one_result(request_id)
             raise Exception(f"User {username} is not authorized to delete request {request_id}")
@@ -179,3 +183,9 @@ class DiscoveryRequestsTable(Database):
             return True    
         return False
     
+    def client_id(self, request) -> str:
+        """
+        Get the client ID by reference to the file record
+        """
+        file_doc = self.files.find_one({'id': request.file_id})
+        return file_doc['client_id']
