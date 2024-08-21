@@ -12,8 +12,8 @@ class DiscoveryFile(BaseModel):
     service_date: str
     due_date: Optional[str] = None
     party_name: str
-    created_by: str
-    create_date: str
+    created_by: Optional[str] = None
+    create_date: Optional[str] = None
     version: Optional[str] = str(uuid4())
 
     class Config:
@@ -38,8 +38,8 @@ class DiscoveryFileSummary(BaseModel):
     service_date: str
     due_date: Optional[str] = None
     party_name: str
-    created_by: str
-    create_date: str
+    created_by: Optional[str] = None
+    create_date: Optional[str] = None
     version: Optional[str] = str(uuid4())
     request_count: int
     response_count: Optional[int] = None
@@ -74,8 +74,8 @@ class DiscoveryRequest(BaseModel):
     objections: Optional[List[str]] = []
     response: Optional[str] = None
     responsive_classifications: Optional[List[str]] = []
-    created_by: str
-    create_date: str
+    created_by: Optional[str] = None
+    create_date: Optional[str] = None
     version: Optional[str] = str(uuid4())
 
     class Config:

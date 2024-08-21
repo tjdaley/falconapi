@@ -75,6 +75,8 @@ class DiscoveryRequestsTable(Database):
         """
         Create a discovery request in the database
         """
+        request.created_by = username
+        request.create_date = datetime.now().strftime("%Y-%m-%d")
         if not self.is_authorized(username=username, client_id=request.client_id):
             if self.fail_silent:
                 return self.insert_one_result(request.id)
