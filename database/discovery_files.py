@@ -56,6 +56,7 @@ class DiscoveryFileTable(Database):
         """
         discovery_file.created_by = username
         discovery_file.create_date = datetime.now().strftime("%Y-%m-%d")
+        print("\n\n", discovery_file.model_dump(), "\n\n")
         if not self.is_authorized(username, discovery_file.client_id):
             if self.fail_silent:
                 return self.insert_one_result(discovery_file.id)
