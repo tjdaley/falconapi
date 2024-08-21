@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List
 from uuid import uuid4
 from database.db import Database
-from models.discovery_requests import DiscoveryRequest, DiscoveryRequests, ServedRequest, ServedRequests
+from models.discovery_requests import DiscoveryRequest
 from database.clients_table import ClientsTable
 
 from falconlogger.flogger import FalconLogger
