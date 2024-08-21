@@ -2,6 +2,7 @@
 discovery_requests_table.py - DiscoveryRequests Table
 """
 from datetime import datetime
+from functools import lru_cache
 from typing import List
 from uuid import uuid4
 from database.db import Database
@@ -48,7 +49,7 @@ class DiscoveryRequestsTable(Database):
             DiscoveryRequest: The DiscoveryRequest object if the request exists, None otherwise.
         """
         request = self.collection.find_one({'id': request_id})
-        client_id = self.client_id(request)
+        client_id = self.client_id(request.get('file_id'))
         if not request:
             return None
         if not self.is_authorized(username, client_id=client_id):
@@ -78,7 +79,7 @@ class DiscoveryRequestsTable(Database):
         """
         request.created_by = username
         request.create_date = datetime.now().strftime("%Y-%m-%d")
-        client_id = self.client_id(request)
+        client_id = self.client_id(request.file_id)
         if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.insert_one_result(request.id)
@@ -103,7 +104,7 @@ class DiscoveryRequestsTable(Database):
             dict: The result of the update operation.
         """
         original_request = self.collection.find_one({'id': request.id})
-        client_id = self.client_id(original_request)
+        client_id = self.client_id(original_request.get('file_id'))
         if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.update_one_result(request.id)
@@ -140,7 +141,7 @@ class DiscoveryRequestsTable(Database):
             dict: The result of the delete operation.
         """
         original_request = self.collection.find_one({'id': request_id})
-        client_id = self.client_id(original_request)
+        client_id = self.client_id(original_request.get('file_id'))
         if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:
                 return self.delete_one_result(request_id)
@@ -183,9 +184,11 @@ class DiscoveryRequestsTable(Database):
             return True    
         return False
     
-    def client_id(self, request) -> str:
+    # This function will tend to be called in batches with the same file_id, so we cache the results
+    @lru_cache(maxsize=128)
+    def client_id(self, file_id) -> str:
         """
         Get the client ID by reference to the file record
         """
-        file_doc = self.files.find_one({'id': request.file_id})
+        file_doc = self.files.find_one({'id': file_id})
         return file_doc['client_id']
