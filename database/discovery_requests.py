@@ -1,6 +1,7 @@
 """
 discovery_requests_table.py - DiscoveryRequests Table
 """
+from datetime import datetime
 from typing import List
 from uuid import uuid4
 from database.db import Database
@@ -33,151 +34,47 @@ class DiscoveryRequestsTable(Database):
         super().__init__(fail_silent=fail_silent)
         self.collection = self.conn[self.database][COLLECTION]
         self.clients_table = ClientsTable()
+        self.files = self.conn[self.database]['discovery_files']
 
-    def get_request_service_list(self, client_id: str = None, billing_number: str = None, username: str = None) -> ServedRequests:
+    def get(self, request_id: str, username: str) -> DiscoveryRequest:
         """
-        Get list of each time discovery was served from the database.
-
-        Must specify either id or billing_id, and username. If you specify both id and billing_id,
-        only id will be used.
+        Get a discovery request from the database.
 
         Args:
-            client_id (str): The client's ID. Use '*' to get all clients.
-            billing_number (str): The client's billing number.
+            request_id (str): The request ID.
             username (str): The user's username.
 
         Returns:
-            List[Client]: The Client object if the client exists, empty list otherwise.
+            DiscoveryRequest: The DiscoveryRequest object if the request exists, None otherwise.
         """
-        if not client_id and not billing_number:
-            raise MissingSearchParamException()
-        if not username:
-            raise MissingUsernameException()
-        
-        if not self.is_authorized(username, client_id, billing_number):
-            return ServedRequests(requests=[])
-        
-        auth_clients: dict = self.clients_table.get_authorized_clients(username)
-
-        if client_id and client_id != '*':
-            client_ids = [client_id]
-        elif client_id == '*':
-            client_ids = [client['id'] for client in auth_clients]
-        
-        if billing_number and not client_id:
-            # get the client_id from the billing_number
-            client_ids = [client['id'] for client in auth_clients if client['billing_number'] == billing_number][0]
-
-        query = {'client_id': {'$in': client_ids}}
-        request_docs = self.collection.find(query)
-
-        # summarize the requests by combining the discovery_type, party_name, and service_date and counting the number of requests
-        served_requests = {}
-        boundary = '::'
-        for request_doc in request_docs:
-            client_id = request_doc['client_id'].replace(boundary, ' ').strip()
-            discovery_type = request_doc['discovery_type'].replace(boundary, ' ').strip().title()
-            party_name = request_doc['party_name'].replace(boundary, ' ').strip().title()
-            service_date = request_doc['service_date'].replace(boundary, ' ').strip()
-            key = f"{client_id}{boundary}{discovery_type}{boundary}{party_name}{boundary}{service_date}"
-            if key in served_requests:
-                served_requests[key]['request_count'] += 1
-            else:
-                served_requests[key] = {'id': 'AGGREGATE'}
-                served_requests[key]['request_count'] = 1
-                served_requests[key]['client_id'] = client_id
-                served_requests[key]['discovery_type'] = discovery_type
-                served_requests[key]['party_name'] = party_name
-                served_requests[key]['service_date'] = service_date
-                served_requests[key]['due_date'] = request_doc['due_date']
-
-            if request_doc.get('response'):
-                if 'response_count' not in served_requests[key]:
-                    served_requests[key]['response_count'] = 1
-                else:
-                    served_requests[key]['response_count'] += 1
-
-        request_list = [ServedRequest(**served_request) for served_request in served_requests.values()]
-        return ServedRequests(requests=request_list)
+        request = self.collection.find_one({'id': request_id})
+        if not request:
+            return None
+        if not self.is_authorized(username, client_id=request['client_id']):
+            return None
+        return DiscoveryRequest(**request)
     
-    def get_requests(self, party_name: str, service_date: str, discovery_type: str, client_id: str = None, username: str = None) -> ServedRequests:
+    def get_all(self, file_id: str, username: str) -> List[DiscoveryRequest]:
         """
-        Get list of each request of a batch of requests from the database.
+        Get a list of all discovery requests for the specified discovery file.
 
         Args:
-            party_name (str): The person who served the request.
-            service_date (str): The date the request was served.
-            discovery_type (str): The type of request.
-            client_id (str): The client's ID.
+            file_id (str): The client's ID.
             username (str): The user's username.
 
         Returns:
             List[Client]: The Client object if the client exists, empty list otherwise.
         """
-        if not client_id:
-            raise MissingSearchParamException()
-        if not username:
-            raise MissingUsernameException()
-        
+        client_id = self.files.find_one({'id': file_id})['client_id']
         if not self.is_authorized(username, client_id):
-            return ServedRequests(requests=[])
-        
-        auth_clients: dict = self.clients_table.get_authorized_clients(username)
+            return []
+        requests = self.collection.find({'file_id': file_id})
+        return [DiscoveryRequest(**request) for request in requests]
 
-        query = {'client_id': client_id, 'party_name': party_name, 'service_date': service_date, 'discovery_type': discovery_type}
-        request_docs = self.collection.find(query)
-
-        return ServedRequests([ServedRequest(**served_request) for served_request in request_docs])
-    
-    def is_authorized(self, username: str, client_id: str = None, billing_number: str = None, wildcard_allowed=True) -> bool:
-        """
-        Check if a user is authorized to access a client.
-
-        Args:
-            client_id (str): The client's ID.
-            username (str): The user's username.
-
-        Returns:
-            bool: True if the user is authorized, False otherwise.
-        """
-        if client_id == '*' and not wildcard_allowed:
-            print("@@@@ Wildcard not allowed")
-            return False
-
-        if client_id == '*':
-            print("@@@@ Wildcard allowed")
-            return True
-
-        auth_clients: dict = self.clients_table.get_authorized_clients(username)
-        if not auth_clients:
-            print("@@@@ No authorized clients")
-            return False
-        
-        # if client_id is not None, check if the client_id is in the list of authorized clients
-        if client_id:
-            if client_id not in [client['id'] for client in auth_clients]:
-                print("@@@@ Client not authorized")
-                print(f"Client ID: {client_id}")
-                print(f"Authorized Clients: {[client['id'] for client in auth_clients]}")
-                return False
-            print("@@@@ Client authorized")
-            return True
-        
-        # if billing_number is not None, check if the billing_number is in the list of authorized clients
-        if billing_number:
-            if billing_number not in [client['billing_number'] for client in auth_clients]:
-                return False
-            return True
-        
-        return False
-
-    def create_request(self, request: DiscoveryRequest, username: str) -> dict:
+    def add(self, request: DiscoveryRequest, username: str) -> dict:
         """
         Create a discovery request in the database
         """
-        print(f"Creating request for {username}")
-        print(f"Client ID: {request.client_id}")
-        print(f"Request ID: {request.id}")
         if not self.is_authorized(username=username, client_id=request.client_id):
             if self.fail_silent:
                 return self.insert_one_result(request.id)
@@ -185,7 +82,7 @@ class DiscoveryRequestsTable(Database):
 
         return self.collection.insert_one(request.model_dump())
 
-    def update_request(self, request: DiscoveryRequest, username: str) -> dict:
+    def update(self, request: DiscoveryRequest, username: str) -> dict:
         """
         Update a discovery request in the database.
 
@@ -216,19 +113,15 @@ class DiscoveryRequestsTable(Database):
                 'response': request.response,
                 'responsive_classifications': request.responsive_classifications,
                 'lookback_date': request.lookback_date,
-                'due_date': request.due_date,
-                'discovery_type': request.discovery_type,
-                'party_name': request.party_name,
-                'service_date': request.service_date,
                 'request_number': request.request_number,
                 'version': str(uuid4()),
                 'last_updated_by': username,
-                'last_updated_date': request.last_updated_date
+                'last_updated_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             }
         )
     
-    def delete_request(self, request_id: str, username: str) -> dict:
+    def delete(self, request_id: str, username: str) -> dict:
         """
         Delete a client from the database
 
@@ -249,3 +142,38 @@ class DiscoveryRequestsTable(Database):
         return self.collection.delete_one(
             {'id': request_id}
         )
+
+    def is_authorized(self, username: str, client_id: str = None, billing_number: str = None, wildcard_allowed=True) -> bool:
+        """
+        Check if a user is authorized to access a client.
+
+        Args:
+            client_id (str): The client's ID.
+            username (str): The user's username.
+
+        Returns:
+            bool: True if the user is authorized, False otherwise.
+        """
+        if client_id == '*' and not wildcard_allowed:
+            return False
+
+        if client_id == '*':
+            return True
+
+        auth_clients: dict = self.clients_table.get_authorized_clients(username)
+        if not auth_clients:
+            return False
+        
+        # if client_id is not None, check if the client_id is in the list of authorized clients
+        if client_id:
+            if client_id not in [client['id'] for client in auth_clients]:
+                return False
+            return True
+        
+        # if billing_number is not None, check if the billing_number is in the list of authorized clients
+        if billing_number:
+            if billing_number not in [client['billing_number'] for client in auth_clients]:
+                return False
+            return True    
+        return False
+    

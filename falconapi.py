@@ -12,6 +12,7 @@ from routers.api_version import APIVersion
 from routers.documents import router as documents
 from routers.childsupport import router as childsupport
 from routers.clients import router as clients
+from routers.discovery_files import router as discovery_files
 from routers.discovery_requests import router as discovery_requests
 from routers.discovery_trackers import router as discovery_trackers
 from routers.users import router as users
@@ -23,7 +24,7 @@ import settings  # NOQA
 api_version = APIVersion(1, 0)
 API_VERSION = api_version.to_str()
 API_VERSION_PREFIX = f'/api/{API_VERSION}'
-COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2024.08.18)"
+COPYRIGHT = f"Falcon API Copyright (c) 2022, Thomas J. Daley, Esq. - Version {API_VERSION} (updated 2024.08.20)"
 SERVERS = [
     {
         "url": "https://api.jdbot.us",
@@ -58,6 +59,7 @@ app.include_router(documents, prefix=API_VERSION_PREFIX)
 app.include_router(childsupport, prefix=API_VERSION_PREFIX)
 app.include_router(clients, prefix=API_VERSION_PREFIX)
 app.include_router(discovery_requests, prefix=API_VERSION_PREFIX)
+app.include_router(discovery_files, prefix=API_VERSION_PREFIX)
 
 @app.get(
     '/',
