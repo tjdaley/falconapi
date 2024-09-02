@@ -1,11 +1,9 @@
 """
 discovery_requests.py - DiscoveryRequests Routes
 """
-from typing import Optional, List
+from typing import List
 from pymongo.results import UpdateResult, InsertOneResult, DeleteResult
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from models.client import Client
 from models.user import User
 from models.discovery_requests import DiscoveryRequest
 from routers.api_version import APIVersion
