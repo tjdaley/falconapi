@@ -79,6 +79,7 @@ class DiscoveryRequestsTable(Database):
         """
         request.created_by = username
         request.create_date = datetime.now().strftime("%Y-%m-%d")
+        request.id = str(uuid4())  # Generate a new UUID for the request
         client_id = self.client_id(request.file_id)
         if not self.is_authorized(username=username, client_id=client_id):
             if self.fail_silent:

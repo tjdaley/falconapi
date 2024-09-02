@@ -2,11 +2,8 @@
 discovery_files.py - DiscoveryFile Routes
 """
 from datetime import datetime
-from typing import Optional, List, Union
-from pymongo.results import UpdateResult, InsertOneResult, DeleteResult
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from models.client import Client
+from typing import List
+from fastapi import APIRouter, Depends, status
 from models.user import User
 from models.discovery_requests import DiscoveryFile, DiscoveryFileSummary
 from routers.api_version import APIVersion
