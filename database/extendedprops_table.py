@@ -95,7 +95,7 @@ class ExtendedPropertiesTable(Database):
         """
         Update extended properties
         """
-        d = extendedprops.dict()
+        d = extendedprops.model_dump()
         id = d.get('id')
         return self.collection.replace_one({'id': id}, d)
 
