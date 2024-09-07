@@ -217,6 +217,7 @@ async def update_document_props(
 
     # Save the extended properties
     extendedprops[props.id] = props
+    LOGGER.info(f"Updated extended properties for document: %s job_status: %s job_id: %s", props.id, props.job_status, props.job_id)
     return {"message": f"Document properties updated (put)", "id": props.id, "version": documents[props.id].version}
 
 
