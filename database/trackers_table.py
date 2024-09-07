@@ -544,7 +544,7 @@ class TrackersTable(Database):
         if dataset_name not in dataset_methods:
             return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=[])
         
-        dataset: list = list(dataset_methods[dataset_name](tracker))
+        dataset: list = list(dataset_methods[dataset_name](tracker, username))
         return TrackerDatasetResponse(id=tracker.id, dataset_name=dataset_name, data=dataset)
     
     def get_documents_for_tracker(self, tracker: Tracker, username: str) -> list[dict]:
