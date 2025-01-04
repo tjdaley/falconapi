@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from auth.handler import get_current_active_user
 from models.document import Document, PutExtendedDocumentProperties, ExtendedDocumentProperties, DocumentCsvTables, DocumentObjTables, DocumentClassificationStatus
-from models.response import ResponseAndId
+from models.response import ResponseAndId, ResponseAndVersion
 from models.user import User
 from database.documents_table import DocumentsDict
 from database.extendedprops_table import ExtendedPropertiesDict
@@ -142,6 +142,15 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
     xprops = extendedprops.get(doc_id) or {}
     return {'id': doc_id, 'tables': xprops.get('tables', {}) or {}, 'version': xprops.get('version', '*unversioned*')}
 
+# Get the document's version
+@router.get('/version', status_code=status.HTTP_200_OK, response_model=ResponseAndVersion, summary='Get a document\'s version. Can also be used to check if a document exists.')
+async def get_document_version(doc_id: str, user: User = Depends(get_current_active_user)):
+    if doc_id not in documents:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
+    if documents[doc_id].added_username != user.username and not user.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Unauthorized - username mismatch. Added by {documents[doc_id].added_username} but requested by {user.username}")
+    return {'message': "Document version", 'id': doc_id, 'version': documents[doc_id].version}
+
 # Delete a table from a document given the table_id and the document_id
 @router.delete('/tables', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a table from a document')
 async def delete_document_table(doc_id: str, table_id: str, user: User = Depends(get_current_active_user)):
@@ -179,7 +188,7 @@ async def update_document(doc: Document, user: User = Depends(get_current_active
     if doc.version != documents[doc.id].version:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document version conflict: {doc.id}")
     if documents[doc.id].added_username != user.username and not user.admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Unauthorized - username mismatch. Added by {documents[doc.id].added_username} but requested by {user.username}")
 
     # Mark document as being updated
     updated_doc = documents.get(doc.id)
@@ -213,7 +222,7 @@ async def update_document_props(
     if props.id not in extendedprops:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Extended properties not found for document: {props.id}")
     if documents[props.id].added_username != user.username and not user.admin:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Unauthorized - username mismatch. Added by {documents[props.id].added_username} but requested by {user.username}")
 
     # Save the extended properties
     extendedprops[props.id] = props

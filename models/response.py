@@ -35,3 +35,21 @@ class ResponseAndId(BaseModel):
                 "id": "2876ce60-0f93-4548-8c2f-ac1014dd8697"
             }
         }
+
+class ResponseAndVersion(BaseModel):
+    """
+    Response model - For Responses that contain a version field.
+    """
+    message: str
+    id: Optional[str]
+    version: Optional[str]
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": "2876ce60-0f93-4548-8c2f-ac1014dd8697",
+                "message": "Document version is 1.0.0",
+                "version": "1.0.0"
+            }
+        }
