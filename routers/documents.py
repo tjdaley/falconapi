@@ -145,11 +145,16 @@ async def get_document_tables_json(doc_id: str, user: User = Depends(get_current
 # Get the document's version
 @router.get('/version', status_code=status.HTTP_200_OK, response_model=ResponseAndVersion, summary='Get a document\'s version. Can also be used to check if a document exists.')
 async def get_document_version(doc_id: str, user: User = Depends(get_current_active_user)):
+    LOGGER.info(f"VERSION: Checking version for document: %s", doc_id)
     if doc_id not in documents:
+        LOGGER.error(f"VERSION: Document not found: %s", doc_id)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found: {doc_id}")
     if documents[doc_id].added_username != user.username and not user.admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Unauthorized - username mismatch. Added by {documents[doc_id].added_username} but requested by {user.username}")
-    return {'message': "Document version", 'id': doc_id, 'version': documents[doc_id].version}
+    doc = documents.get(doc_id)
+    if doc:
+        return {'message': "Document version", 'id': doc_id, 'version': doc.version}
+    return {'message': "Document not found", 'id': doc_id, 'version': None}
 
 # Delete a table from a document given the table_id and the document_id
 @router.delete('/tables', status_code=status.HTTP_200_OK, response_model=ResponseAndId, summary='Delete a table from a document')
