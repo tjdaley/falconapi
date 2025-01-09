@@ -187,14 +187,14 @@ async def register_user(user_registration: UserRegistration) -> RegistrationResp
         'user_id': user.id
     }
 
-@router.put("/users/password")
+@router.put("/users/password", response_model=RegistrationResponse, responses={401: {"description": "Incorrect username or password"}})
 async def change_password(
     old_password: str,
     new_password: str,
     current_user: User = Depends(get_current_active_user),
-):
+) -> RegistrationResponse:
     # 1) Verify current_user has permission or matches user_id
-    user = authenticate_user(current_user.email, old_password)
+    user = authenticate_user(current_user.username, old_password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -202,14 +202,17 @@ async def change_password(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-
     # 2) Hash the new password
     hashed_password = get_password_hash(new_password)
 
     # 3) Update the password in the database
     USERS_TABLE.update_password(current_user.id, hashed_password)
 
-    return {"message": "Password changed"}
+    return {
+        'username': current_user.username,
+        'message': "Password changed",
+        'status': "success",
+        'user_id': current_user.id}
 
 
 #----------------------------------------------------------
