@@ -48,6 +48,15 @@ class UsersTable(Database):
                 }
             }
         )
+    
+    def update_password(self, user_id: str, password_hash: str) -> dict:
+        """
+        Update a user's password in the database
+        """
+        return self.collection.update_one(
+            {'id': user_id},
+            {'$set': {'password': password_hash}}
+        )
 
     def delete_user(self, username: str) -> dict:
         """
